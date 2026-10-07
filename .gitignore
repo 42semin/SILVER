@@ -1,0 +1,25 @@
+# 배포에 불필요한 원본 자료 (실수로 올라가는 것 방지)
+*.xlsx
+*.xls
+*.hwp
+*.hwpx
+*.pptx
+*.pdf
+
+# 비밀번호·키가 적힌 메모는 절대 올리지 않습니다
+*비번*
+*비밀번호*
+*secret*
+.env
+.env.*
+
+# 개발용 보조 파일
+서버실행.py
+서버실행.bat
+__pycache__/
+.vscode/
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
