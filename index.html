@@ -150,16 +150,31 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.5px;margin:0}
 .kv{display:flex;gap:10px;margin:5px 0;font-family:var(--read);font-size:18px}
 .kv b{flex:none;min-width:74px;color:var(--accent);font-family:var(--ui);font-weight:800}
 
-/* 쉽게 보기 */
-.easy{display:none;padding:6px 28px 8px}
-.easy.show{display:block}
-.m-body.hide{display:none}
-.easy .big{
-  font-family:var(--read);font-size:23px;line-height:1.85;color:#2B2B2B;font-weight:700;
+/* ---------- 쉬운 설명 먼저 보여주기 (칸을 누르면 자세한 안내가 펼쳐짐) ---------- */
+.ez{padding:20px 24px 6px}
+.ezlead{font-family:var(--read);font-size:17px;color:#7a7264;margin:0 4px 16px;line-height:1.6}
+.ezcard{border:2px solid var(--line);border-radius:20px;margin-bottom:14px;overflow:hidden;background:#fff}
+.ezcard.open{border-color:var(--accent)}
+.eztop{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:20px 22px;background:var(--tint);cursor:pointer;
 }
-.easy .block{background:var(--tint);border-radius:18px;padding:20px 22px;margin:16px 0}
-.easy .block .t{font-family:var(--ui);font-size:18px;font-weight:800;color:var(--accent);margin-bottom:6px;display:flex;align-items:center;gap:8px}
-.easy .block .c{font-family:var(--read);font-size:22px;line-height:1.75;color:#333;font-weight:400}
+.eztop.static{cursor:default}
+.eztop:focus-visible{outline:3px solid var(--accent);outline-offset:-4px}
+.ezqa{flex:1;min-width:0}
+.ezq{display:block;font-family:var(--ui);font-size:18px;font-weight:800;color:var(--accent);margin-bottom:7px}
+.eza{display:block;font-family:var(--read);font-size:22px;line-height:1.75;color:#2B2B2B}
+.ezmore{
+  flex:none;align-self:center;font-family:var(--ui);font-size:16px;font-weight:800;
+  color:var(--accent);background:#fff;border:2px solid var(--accent);
+  border-radius:999px;padding:9px 15px;white-space:nowrap;
+}
+.ezcard .ezdetail{display:none;padding:18px 22px 20px;border-top:2px dashed var(--line)}
+.ezcard.open .ezdetail{display:block}
+.ezdetail .dlabel{font-family:var(--ui);font-size:15px;font-weight:800;color:#9a917d;margin-bottom:8px}
+.ezdetail .dt{font-family:var(--read);font-size:18px;color:#444;line-height:1.7}
+.ezdetail .dt .sub{display:block;color:#777;font-size:16px;margin-top:4px}
+.ezdetail .dt .warn{color:#C82B2F;font-weight:700}
 
 /* 하단 버튼 */
 .m-actions{
@@ -180,6 +195,10 @@ footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-
   h1{font-size:27px}
   .grid{grid-template-columns:1fr}
   .m-head h2{font-size:24px}
+  .ez{padding:16px 14px 6px}
+  .eztop{flex-direction:column;gap:12px;padding:18px 16px}
+  .ezmore{align-self:flex-start}
+  .ezcard .ezdetail{padding:16px}
 }
 
 /* ---------- 상단 탭 ---------- */
@@ -770,11 +789,30 @@ const modal = document.getElementById("modal");
 
 function line(items){ return items.map(i=>`• ${i}`).join("<br>"); }
 
+// 쉬운 설명을 먼저 보여주고, 누르면 원래 안내가 펼쳐지는 칸
+function ezCard(q, easy, detail){
+  return `<div class="ezcard fold">
+    <div class="eztop" role="button" tabindex="0" aria-expanded="false">
+      <span class="ezqa"><span class="ezq">${q}</span><span class="eza">${easy}</span></span>
+      <span class="ezmore">자세히 ▾</span>
+    </div>
+    <div class="ezdetail">${detail}</div>
+  </div>`;
+}
+// 더 풀어 쓸 내용이 없어 그냥 보여주는 칸(서류·문의)
+function ezPlain(q, body){
+  return `<div class="ezcard">
+    <div class="eztop static">
+      <span class="ezqa"><span class="ezq">${q}</span><span class="eza">${body}</span></span>
+    </div>
+  </div>`;
+}
+
 function openModal(d){
   const [pc,pt] = PERIOD[d.period];
   modal.style.setProperty("--accent",`var(--c-${d.field})`);
   modal.style.setProperty("--tint",`var(--b-${d.field})`);
-  const excludeHtml = d.exclude ? `<div class="txt" style="margin-top:8px"><span class="warn">받을 수 없는 경우:</span> ${d.exclude}</div>` : "";
+  const excludeHtml = d.exclude ? `<div class="dt" style="margin-top:10px"><span class="warn">받을 수 없는 경우:</span> ${d.exclude}</div>` : "";
   modal.innerHTML = `
     <div class="m-head">
       <button class="m-star ${favs.has(d.id)?'on':''}" id="mStar">${favs.has(d.id)?'★':'☆'}</button>
@@ -784,68 +822,62 @@ function openModal(d){
       <div class="badges"><span class="badge ${pc}">${pt}</span></div>
     </div>
 
-    <div class="m-body" id="mBody">
-      <div class="sec">
-        <div class="label">🙋 누가 받을 수 있나요</div>
-        <div class="txt">${line(d.who)}</div>
-        ${excludeHtml}
-      </div>
-      <div class="sec">
-        <div class="label">🎁 무엇을 받나요</div>
-        <div class="txt">${d.benefit}<span class="sub">${d.benefitDetail}</span></div>
-      </div>
-      <div class="sec">
-        <div class="label">📝 어떻게 신청하나요</div>
-        <div class="kv"><b>신청 시기</b><span>${d.when}</span></div>
-        <div class="kv"><b>신청 방법</b><span>${d.how}</span></div>
-        <div class="kv"><b>신청 장소</b><span>${d.where}</span></div>
-      </div>
-      <div class="sec">
-        <div class="label">📄 필요한 서류</div>
-        <div class="txt">${d.docs}</div>
-      </div>
-      <div class="sec">
-        <div class="label">☎ 문의</div>
-        <div class="txt">${d.contact}</div>
-      </div>
-    </div>
+    <div class="ez" id="mEz">
+      <p class="ezlead">쉬운 말로 먼저 알려드립니다. 더 알고 싶은 칸을 누르시면 <b>원래 안내 그대로</b> 펼쳐집니다.</p>
 
-    <div class="easy" id="mEasy">
-      <p class="big">쉬운 말로 설명해 드릴게요.</p>
-      <div class="block"><div class="t">🙋 누가 받나요?</div><div class="c">${d.easy.who}</div></div>
-      <div class="block"><div class="t">🎁 무엇을 받나요?</div><div class="c">${d.easy.benefit}</div></div>
-      <div class="block"><div class="t">📝 어떻게 신청하나요?</div><div class="c">${d.easy.when}</div></div>
+      ${ezCard("🙋 누가 받나요?", d.easy.who,
+        `<div class="dlabel">원래 안내</div><div class="dt">${line(d.who)}</div>${excludeHtml}`)}
+
+      ${ezCard("🎁 무엇을 받나요?", d.easy.benefit,
+        `<div class="dlabel">원래 안내</div><div class="dt">${d.benefit}<span class="sub">${d.benefitDetail}</span></div>`)}
+
+      ${ezCard("📝 어떻게 신청하나요?", d.easy.when,
+        `<div class="dlabel">원래 안내</div>
+         <div class="kv"><b>신청 시기</b><span>${d.when}</span></div>
+         <div class="kv"><b>신청 방법</b><span>${d.how}</span></div>
+         <div class="kv"><b>신청 장소</b><span>${d.where}</span></div>`)}
+
+      ${ezPlain("📄 무슨 서류가 필요한가요?", d.docs)}
+      ${ezPlain("☎ 어디에 물어보나요?", d.contact)}
+
       <p class="easy-note">더 궁금하면 가까운 동 행정복지센터(주민센터)에 물어보세요.</p>
     </div>
 
     <div class="m-actions">
-      <button class="btn easybtn" id="easyBtn">🔍 쉽게 보기</button>
-      <button class="btn docbtn" id="docBtn">📄 준비 서류 보기</button>
+      <button class="btn easybtn" id="allBtn">📋 모두 자세히 보기</button>
+      <button class="btn docbtn" id="closeBtn">✕ 닫기</button>
     </div>`;
 
   overlay.classList.add("open");
   document.body.style.overflow="hidden";
 
-  wrapTerms(modal.querySelector("#mBody"));
-  const body = modal.querySelector("#mBody");
-  const easy = modal.querySelector("#mEasy");
-  const easyBtn = modal.querySelector("#easyBtn");
-  let easyOn=false;
-  easyBtn.onclick = ()=>{
-    easyOn=!easyOn;
-    body.classList.toggle("hide",easyOn);
-    easy.classList.toggle("show",easyOn);
-    easyBtn.textContent = easyOn ? "📋 자세히 보기" : "🔍 쉽게 보기";
+  wrapTerms(modal.querySelector("#mEz"));
+
+  // 칸 하나하나 펼치기 / 접기
+  const allBtn = modal.querySelector("#allBtn");
+  const folds = [...modal.querySelectorAll(".ezcard.fold")];
+  function paintFold(c){
+    const open = c.classList.contains("open");
+    c.querySelector(".eztop").setAttribute("aria-expanded", String(open));
+    c.querySelector(".ezmore").textContent = open ? "접기 ▴" : "자세히 ▾";
+  }
+  function paintAllBtn(){
+    const allOpen = folds.length && folds.every(c=>c.classList.contains("open"));
+    allBtn.textContent = allOpen ? "🔍 쉬운 설명만 보기" : "📋 모두 자세히 보기";
+  }
+  folds.forEach(c=>{
+    const top = c.querySelector(".eztop");
+    const toggle = ()=>{ c.classList.toggle("open"); paintFold(c); paintAllBtn(); };
+    top.onclick = toggle;
+    top.onkeydown = e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(); } };
+  });
+  allBtn.onclick = ()=>{
+    const open = !folds.every(c=>c.classList.contains("open"));
+    folds.forEach(c=>{ c.classList.toggle("open", open); paintFold(c); });
+    paintAllBtn();
   };
-  modal.querySelector("#docBtn").onclick = ()=>{
-    // 서류 섹션으로 스크롤 강조
-    if(easyOn){ easyBtn.click(); }
-    const secs=[...modal.querySelectorAll(".sec")];
-    const docSec = secs.find(s=>s.querySelector(".label").textContent.includes("서류"));
-    docSec.scrollIntoView({behavior:"smooth",block:"center"});
-    docSec.style.transition="background .3s"; docSec.style.background="#FFF7E0";
-    setTimeout(()=>docSec.style.background="", 30000);
-  };
+  modal.querySelector("#closeBtn").onclick = closeModal;
+
   const mStar = modal.querySelector("#mStar");
   mStar.onclick = ()=>{ toggleFav(d.id); mStar.classList.toggle("on"); mStar.textContent=favs.has(d.id)?'★':'☆'; render(); };
   modal.querySelector("#mClose").onclick = closeModal;
