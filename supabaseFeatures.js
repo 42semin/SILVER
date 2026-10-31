@@ -66,6 +66,13 @@
     .auth-msg{ font-size:16px; margin-top:10px; min-height:22px; }
     .auth-msg.err{ color:#c0392b; }
     .auth-msg.ok{ color:#2e7d32; }
+    /* 인증 메일이 오지 않았을 때만 나타나는 버튼 */
+    .auth-resend{
+      display:none; width:100%; font-size:17px; font-weight:800; padding:13px; margin-top:10px;
+      background:#fff; color:#3f7d4e; border:2px solid #3f7d4e; border-radius:12px; cursor:pointer;
+    }
+    .auth-resend.show{ display:block; }
+    .auth-resend:disabled{ opacity:.6; cursor:default; }
     .auth-close{ float:right; background:none; border:none; font-size:24px; cursor:pointer; color:#999; }
 
     /* 상세 모달 안 '내 기록' 영역 */
@@ -110,6 +117,7 @@
       </div>
       <button class="auth-submit" id="authSubmit">로그인</button>
       <div class="auth-msg" id="authMsg"></div>
+      <button class="auth-resend" id="authResend">✉ 인증 메일 다시 보내기</button>
       <div class="auth-switch">
         <span id="authSwitchText">아직 회원이 아니신가요?</span>
         <button id="authSwitch">회원가입</button>
@@ -126,7 +134,8 @@
     msg:    authOverlay.querySelector("#authMsg"),
     switchText: authOverlay.querySelector("#authSwitchText"),
     switchBtn:  authOverlay.querySelector("#authSwitch"),
-    close:  authOverlay.querySelector("#authClose")
+    close:  authOverlay.querySelector("#authClose"),
+    resend: authOverlay.querySelector("#authResend")
   };
 
   let mode = "login";   // "login" 또는 "signup"
@@ -135,6 +144,7 @@
     mode = m;
     el.msg.textContent = "";
     el.msg.className = "auth-msg";
+    el.resend.classList.remove("show");
     if (m === "login") {
       el.title.textContent = "로그인";
       el.desc.textContent = "이메일과 비밀번호를 넣어 주세요.";
@@ -185,10 +195,18 @@
           setTimeout(closeAuth, 800);
         } else {
           showMsg("가입 신청이 됐어요. 메일함에서 인증 링크를 눌러 주세요. (이 창은 켜 둔 채로)", "ok");
+          el.resend.classList.add("show");
         }
       } else {
         const { error } = await db.auth.signInWithPassword({ email, password: pw });
-        if (error) { showMsg(translateError(error.message), "err"); return; }
+        if (error) {
+          showMsg(translateError(error.message), "err");
+          // 아직 인증 링크를 누르지 않은 계정이면 메일을 다시 받을 수 있게 합니다.
+          if ((error.message || "").toLowerCase().includes("email not confirmed")) {
+            el.resend.classList.add("show");
+          }
+          return;
+        }
         showMsg("로그인되었습니다.", "ok");
         setTimeout(closeAuth, 500);
       }
@@ -196,6 +214,27 @@
       showMsg("문제가 생겼어요: " + e.message, "err");
     } finally {
       el.submit.disabled = false;
+    }
+  };
+
+  // 인증 메일 다시 보내기 — 메일이 오지 않았거나 링크가 만료됐을 때
+  el.resend.onclick = async () => {
+    const email = el.email.value.trim();
+    if (!email) { showMsg("이메일을 먼저 넣어 주세요.", "err"); return; }
+    el.resend.disabled = true;
+    showMsg("인증 메일을 다시 보내고 있어요…", "");
+    try {
+      const { error } = await db.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: pageUrl() }
+      });
+      if (error) { showMsg(translateError(error.message), "err"); return; }
+      showMsg("다시 보냈어요. 메일함과 스팸함을 확인해 주세요.", "ok");
+    } catch (e) {
+      showMsg("문제가 생겼어요: " + e.message, "err");
+    } finally {
+      el.resend.disabled = false;
     }
   };
 
@@ -255,6 +294,13 @@
     if (m.includes("already registered")) return "이미 가입된 이메일이에요. 로그인해 보세요.";
     if (m.includes("invalid login")) return "이메일이나 비밀번호가 맞지 않아요.";
     if (m.includes("email not confirmed")) return "메일함에서 인증 링크를 먼저 눌러 주세요.";
+    // 기본 메일 발송기는 Supabase 팀 구성원 주소로만 보낼 수 있습니다.
+    if (m.includes("not authorized") || m.includes("address_not_authorized")) {
+      return "이 메일 주소로는 인증 메일을 보낼 수 없어요. 다른 주소로 가입하시거나 관리자에게 알려 주세요.";
+    }
+    if (m.includes("rate limit") || m.includes("too many") || m.includes("for security purposes")) {
+      return "인증 메일을 너무 자주 보냈어요. 잠시(1시간쯤) 뒤에 다시 시도해 주세요.";
+    }
     if (m.includes("password")) return "비밀번호를 확인해 주세요(6자 이상).";
     return "안내: " + m;
   }
