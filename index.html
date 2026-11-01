@@ -199,6 +199,8 @@ footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-
   .eztop{flex-direction:column;gap:12px;padding:18px 16px}
   .ezmore{align-self:flex-start}
   .ezcard .ezdetail{padding:16px}
+  .myhead h2{font-size:22px}
+  .mybox{padding:20px}
 }
 
 /* ---------- 상단 탭 ---------- */
@@ -212,6 +214,35 @@ footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-
 .tab:focus-visible{outline:3px solid #17B0A0;outline-offset:2px}
 .tabline{border-bottom:2px solid var(--line);max-width:1120px;margin:0 auto;padding:0 24px}
 [hidden]{display:none !important}
+
+/* ---------- 마이페이지 ---------- */
+#myBody{padding-bottom:70px}
+.mysec{margin-top:28px}
+.myhead{
+  max-width:1120px;margin:0 auto;padding:0 26px;
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+}
+.myhead h2{font-family:var(--ui);font-size:25px;font-weight:800;color:var(--ink);margin:0}
+.myhead .n{
+  font-family:var(--ui);font-size:17px;font-weight:800;color:#0E8A7D;
+  background:#DDF6F2;border-radius:999px;padding:5px 13px;
+}
+.myhead .note{font-family:var(--read);font-size:17px;color:var(--ink-soft)}
+.mysec .grid{margin:14px auto 0}
+.mywrap{max-width:1120px;margin:14px auto 0;padding:0 26px}
+.mybox{
+  border:2px dashed var(--line);border-radius:20px;background:#fff;padding:26px;
+  font-family:var(--read);font-size:19px;color:#8a8271;line-height:1.75;
+}
+.mybox b{color:var(--ink)}
+.mybox.warn{background:#FFF8E1;border-style:solid;border-color:#F2D98C;color:#6b5f3a}
+.mybox .go{
+  display:inline-block;margin-top:16px;font-family:var(--ui);font-size:18px;font-weight:800;
+  padding:13px 20px;border-radius:14px;border:2px solid #17B0A0;
+  background:#fff;color:#0E8A7D;cursor:pointer;
+}
+.mybox .go:hover{background:#DDF6F2}
+.mybox .go:focus-visible{outline:3px solid #17B0A0;outline-offset:2px}
 
 /* ---------- 정보 보기: 메뉴 ---------- */
 .infomenu{
@@ -425,6 +456,7 @@ footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-
     <button class="tab" id="tabMine" role="tab" aria-selected="true">🙋 내 맞춤 복지 찾기</button>
     <button class="tab" id="tabFind" role="tab" aria-selected="false">🔎 복지 모두 보기</button>
     <button class="tab" id="tabInfo" role="tab" aria-selected="false">📖 복지 정보 보기</button>
+    <button class="tab" id="tabMy" role="tab" aria-selected="false">⭐ 마이페이지</button>
   </nav>
 </header>
 <div class="tabline"></div>
@@ -462,6 +494,11 @@ footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-
   <p class="lead" id="infoLead" style="max-width:1120px;margin:18px auto 0;padding:0 26px">자격을 따지지 않고 복지 정보를 편하게 둘러보실 수 있습니다. 알고 싶은 것을 눌러 주세요.</p>
   <div class="infomenu" id="infoMenu"></div>
   <div class="infopanel" id="infoPanel" hidden></div>
+</section>
+
+<section id="viewMy" hidden>
+  <p class="lead" style="max-width:1120px;margin:18px auto 0;padding:0 26px">별표(★)를 누른 복지와, <b>이미 받고 계신 복지</b>·<b>신청하신 복지</b>를 한곳에 모았습니다.</p>
+  <div id="myBody"></div>
 </section>
 
 <footer>출처: 「2026년도 노인복지 주요사업」 대전광역시 노인복지과 · 노인장기요양보험/치매관리사업 안내자료. 정확한 금액·서류·기간은 신청 기관에서 다시 확인해 주세요.</footer>
@@ -754,34 +791,128 @@ const grid = document.getElementById("grid");
 const countEl = document.getElementById("count");
 function shortDesc(d){ return d.who[0]; }
 
+// 복지 카드 한 장을 만듭니다. (복지 모두 보기 / 마이페이지가 같이 씁니다)
+function makeCard(d){
+  const [pc,pt] = PERIOD[d.period];
+  const card = document.createElement("button");
+  card.className="card";
+  card.style.setProperty("--accent",`var(--c-${d.field})`);
+  card.style.setProperty("--tint",`var(--b-${d.field})`);
+  card.innerHTML = `
+    <button class="star ${favs.has(d.id)?'on':''}" aria-label="즐겨찾기" data-id="${d.id}">${favs.has(d.id)?'★':'☆'}</button>
+    <div class="row">
+      <div class="ic">${CAT[d.field].ic}</div>
+      <div><div class="field">${d.field}</div></div>
+    </div>
+    <h3>${d.name}</h3>
+    <p class="desc">${shortDesc(d)}</p>
+    <div class="badges">
+      <span class="badge ${pc}">${pt}</span>
+      <span class="badge info">${d.type}</span>
+    </div>`;
+  card.querySelector(".star").onclick = (e)=>{ e.stopPropagation(); toggleFav(d.id); };
+  card.onclick = ()=>openModal(d);
+  return card;
+}
+
 function render(){
   let list = DATA.filter(d=> (activeField==="전체"||d.field===activeField) && (!onlyApplicable || d.apply==="Y"));
   countEl.innerHTML = `<b>${list.length}개</b> 복지를 찾았어요`;
   grid.innerHTML="";
-  list.forEach(d=>{
-    const [pc,pt] = PERIOD[d.period];
-    const card = document.createElement("button");
-    card.className="card";
-    card.style.setProperty("--accent",`var(--c-${d.field})`);
-    card.style.setProperty("--tint",`var(--b-${d.field})`);
-    card.innerHTML = `
-      <button class="star ${favs.has(d.id)?'on':''}" aria-label="즐겨찾기" data-id="${d.id}">${favs.has(d.id)?'★':'☆'}</button>
-      <div class="row">
-        <div class="ic">${CAT[d.field].ic}</div>
-        <div><div class="field">${d.field}</div></div>
-      </div>
-      <h3>${d.name}</h3>
-      <p class="desc">${shortDesc(d)}</p>
-      <div class="badges">
-        <span class="badge ${pc}">${pt}</span>
-        <span class="badge info">${d.type}</span>
-      </div>`;
-    card.querySelector(".star").onclick = (e)=>{ e.stopPropagation(); toggleFav(d.id); e.target.classList.toggle("on"); e.target.textContent = favs.has(d.id)?'★':'☆'; };
-    card.onclick = ()=>openModal(d);
-    grid.appendChild(card);
-  });
+  list.forEach(d=> grid.appendChild(makeCard(d)));
 }
-function toggleFav(id){ favs.has(id)?favs.delete(id):favs.add(id); }
+function toggleFav(id){
+  favs.has(id)?favs.delete(id):favs.add(id);
+  paintStars(id);                       // 화면에 보이는 같은 복지의 별표를 모두 맞춥니다
+  refreshMyPage();                      // 마이페이지가 열려 있으면 목록을 다시 그립니다
+}
+// 같은 복지가 여러 화면(목록·마이페이지·상세)에 동시에 보일 수 있어,
+// 별표 모양을 한 번에 맞춰 줍니다.
+function paintStars(id){
+  const on = favs.has(id);
+  document.querySelectorAll(`.star[data-id="${id}"], .m-star[data-id="${id}"]`)
+    .forEach(b=>{ b.classList.toggle("on", on); b.textContent = on ? "★" : "☆"; });
+}
+
+/* ---------- 마이페이지 ----------
+   별표한 복지와 '이미 받고 있어요 / 신청했어요' 기록을 한곳에 모아 보여줍니다.
+   로그인 상태와 기록은 supabaseFeatures.js 가 공개한 함수로 읽습니다.
+   (그 파일이 없어도 별표 목록은 그대로 동작합니다)                        */
+function mySection(title, note, list, emptyHtml){
+  const sec = document.createElement("div");
+  sec.className = "mysec";
+  sec.innerHTML = `<div class="myhead">
+      <h2>${title}</h2><span class="n">${list.length}개</span>
+      ${note ? `<span class="note">${note}</span>` : ""}
+    </div>`;
+  if(list.length){
+    const g = document.createElement("div");
+    g.className = "grid";
+    list.forEach(d=> g.appendChild(makeCard(d)));
+    sec.appendChild(g);
+  }else{
+    const w = document.createElement("div");
+    w.className = "mywrap";
+    w.innerHTML = `<div class="mybox">${emptyHtml}</div>`;
+    sec.appendChild(w);
+  }
+  return sec;
+}
+
+function renderMyPage(){
+  const body = document.getElementById("myBody");
+  if(!body) return;
+
+  const user = (typeof window.getCurrentUser === "function") ? window.getCurrentUser() : null;
+  const st   = (typeof window.getWelfareStatusAll === "function") ? window.getWelfareStatusAll() : {};
+  const pick = (want)=> DATA.filter(d=> st[d.id] === want);
+
+  const favList  = DATA.filter(d=> favs.has(d.id));   // DATA 순서(번호순)로 보여줍니다
+  const recvList = pick("received");
+  const applList = pick("applied");
+
+  body.innerHTML = "";
+
+  if(!user){
+    const w = document.createElement("div");
+    w.className = "mysec";
+    w.innerHTML = `<div class="mywrap"><div class="mybox warn">
+        지금은 <b>로그인하지 않은 상태</b>입니다. 별표와 기록이 이 컴퓨터에만 잠깐 남아 있어,
+        창을 닫으면 사라집니다.<br>
+        로그인하시면 <b>저장되어</b> 다음에 오셔도 그대로 있습니다.
+        <button class="go" id="myLoginBtn">로그인하러 가기</button>
+      </div></div>`;
+    body.appendChild(w);
+  }
+
+  body.appendChild(mySection("⭐ 별표한 복지",
+    "카드의 ★을 다시 누르면 목록에서 빠집니다.", favList,
+    `아직 별표한 복지가 없습니다.<br>
+     <b>복지 모두 보기</b>에서 카드 왼쪽 위의 <b>☆</b>를 누르시면 여기에 모입니다.
+     <button class="go" data-go="find">복지 모두 보기로 가기</button>`));
+
+  body.appendChild(mySection("✅ 이미 받고 있는 복지", "", recvList,
+    `표시해 두신 복지가 없습니다.<br>
+     복지 카드를 열면 맨 아래에 <b>✅ 이미 받고 있어요</b> 버튼이 있습니다.`));
+
+  body.appendChild(mySection("📨 신청한 복지", "", applList,
+    `표시해 두신 복지가 없습니다.<br>
+     복지 카드를 열면 맨 아래에 <b>📨 신청했어요</b> 버튼이 있습니다.`));
+
+  body.querySelectorAll("[data-go]").forEach(b=> b.onclick = ()=> switchTab(b.dataset.go));
+  const lb = body.querySelector("#myLoginBtn");
+  if(lb) lb.onclick = ()=>{
+    const btn = document.querySelector(".authbtn.primary");   // 헤더의 '로그인' 버튼
+    if(btn) btn.click();
+  };
+}
+// 별표·기록이 바뀌었을 때, 화면이 열려 있으면 다시 그립니다.
+function refreshMyPage(){
+  const v = document.getElementById("viewMy");
+  if(v && !v.hidden) renderMyPage();
+}
+window.renderMyPage  = renderMyPage;
+window.refreshMyPage = refreshMyPage;
 
 // ---------- 상세 모달 ----------
 const overlay = document.getElementById("overlay");
@@ -815,7 +946,7 @@ function openModal(d){
   const excludeHtml = d.exclude ? `<div class="dt" style="margin-top:10px"><span class="warn">받을 수 없는 경우:</span> ${d.exclude}</div>` : "";
   modal.innerHTML = `
     <div class="m-head">
-      <button class="m-star ${favs.has(d.id)?'on':''}" id="mStar">${favs.has(d.id)?'★':'☆'}</button>
+      <button class="m-star ${favs.has(d.id)?'on':''}" id="mStar" data-id="${d.id}">${favs.has(d.id)?'★':'☆'}</button>
       <button class="m-close" id="mClose" aria-label="닫기">✕</button>
       <div class="field"><span class="ic">${CAT[d.field].ic}</span>${d.field}<span class="m-type">${d.type}</span></div>
       <h2>${d.name}</h2>
@@ -879,7 +1010,7 @@ function openModal(d){
   modal.querySelector("#closeBtn").onclick = closeModal;
 
   const mStar = modal.querySelector("#mStar");
-  mStar.onclick = ()=>{ toggleFav(d.id); mStar.classList.toggle("on"); mStar.textContent=favs.has(d.id)?'★':'☆'; render(); };
+  mStar.onclick = ()=>{ toggleFav(d.id); };   // 모양 맞추기는 paintStars 가 합니다
   modal.querySelector("#mClose").onclick = closeModal;
 }
 function closeModal(){ overlay.classList.remove("open"); document.body.style.overflow=""; }
@@ -889,14 +1020,15 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
 const INFO = {"dict": [["T01", "소득인정액", "소득·재산", "매달 버는 돈에, 집·땅·저축 같은 재산을 돈으로 바꿔 계산한 금액을 더한 것입니다. 기초연금을 드릴지 정할 때 이 금액을 봅니다.", "소득평가액 + 재산의 소득환산액", "1"], ["T02", "소득평가액", "소득·재산", "일해서 번 돈과 연금 등에서 정해진 금액을 빼고 남은 소득입니다.", "", "1"], ["T03", "재산의 소득환산액", "소득·재산", "집·땅·자동차·예금 같은 재산을 매달 소득처럼 바꿔 계산한 금액입니다.", "", "1"], ["T04", "선정기준액", "소득·재산", "기초연금을 드릴지 가르는 기준 금액입니다. 소득인정액이 이 금액보다 적으면 받으실 수 있습니다.", "혼자 사시면 247만원, 부부는 395만 2천원 이하", "1"], ["T05", "기준 중위소득", "소득·재산", "우리나라 모든 가구를 소득 순서로 줄 세웠을 때, 딱 한가운데 있는 가구의 소득입니다. 여기에 몇 %를 곱해 기준을 정합니다.", "경로식당 일반 이용은 150% 이하, 치매치료관리비는 120% 이하", "10, 23"], ["T06", "기초생활수급자", "자격", "소득이 매우 적어 나라에서 생계비·의료비 등을 받고 계신 분입니다.", "", "7, 8, 10, 11, 15, 16"], ["T07", "차상위계층", "자격", "기초생활수급자는 아니지만, 그 바로 위로 형편이 어려운 분입니다.", "", "7, 8, 10"], ["T08", "기초연금 수급자", "자격", "만 65세가 넘어 매달 기초연금을 받고 계신 분입니다.", "", "2, 7, 8"], ["T09", "기타 의료급여자", "자격", "국가유공자·보훈대상자·북한이탈주민·이재민·노숙인처럼 나라에서 의료비를 지원받는 분입니다.", "", "11"], ["T10", "장기요양등급", "돌봄·요양", "혼자 생활하기가 얼마나 어려운지 건강보험공단이 조사해서 매기는 등급입니다. 1등급이 가장 도움이 많이 필요한 상태입니다.", "1~5등급과 인지지원등급이 있습니다", "11, 14, 20, 21"], ["T11", "등급외자", "돌봄·요양", "장기요양 신청은 했지만 등급을 받지 못하신 분입니다. 대신 다른 지원을 받으실 수 있습니다.", "", "15, 16"], ["T12", "인지지원등급(치매특별등급)", "돌봄·요양", "가벼운 치매가 있으신 분께 드리는 장기요양 등급입니다. 기억력을 지키는 프로그램을 받으실 수 있습니다.", "", "21"], ["T13", "재가급여", "돌봄·요양", "요양시설에 가지 않고 집에서 받는 돌봄입니다.", "방문요양·방문목욕·방문간호, 주야간보호, 복지용구", "20"], ["T14", "시설급여", "돌봄·요양", "요양시설에 들어가 지내면서 받는 돌봄입니다.", "", "14, 20"], ["T15", "특별현금급여", "돌봄·요양", "요양시설이나 돌봄 인력이 없는 지역처럼 특별한 사정이 있을 때 현금으로 드리는 급여입니다.", "", "20"], ["T16", "본인부담금", "돈", "전체 비용 중에서 내가 직접 내는 몫입니다. 형편에 따라 줄여 드립니다.", "장기요양은 시설 20%·재가 15%, 저소득층은 절반, 기초생활수급자는 무료", "11, 20, 21"], ["T17", "방문요양", "돌봄·요양", "요양보호사가 집으로 찾아와 식사·청소·씻기 같은 일을 도와드리는 서비스입니다.", "", "20, 21"], ["T18", "주야간보호", "돌봄·요양", "낮 동안 센터에서 지내며 식사와 활동, 돌봄을 받고 저녁에 집으로 돌아오는 서비스입니다.", "", "20, 21"], ["T19", "복지용구", "돌봄·요양", "지팡이·보행기·침대처럼 생활에 필요한 용품입니다. 장기요양 등급이 있으면 사거나 빌릴 때 지원받습니다.", "", "20"], ["T20", "노인성 질병", "건강", "치매·중풍(뇌졸중)·파킨슨병처럼 나이가 들며 생기기 쉬운 병입니다. 이런 병이 있으면 65세가 안 되어도 장기요양을 신청할 수 있습니다.", "", "20"], ["T21", "경도인지장애", "건강", "치매는 아니지만 기억력이 예전보다 떨어진 상태입니다. 이때 관리하면 치매로 가는 것을 늦출 수 있습니다.", "", "22"], ["T22", "CIST 선별검사", "건강", "보건소에서 하는 간단한 기억력 검사입니다. 오래 걸리지 않고 무료입니다.", "치매조기검진 1단계", "22"], ["T23", "독거가구", "가구", "실제로 혼자 지내시는 경우입니다. 주민등록에 함께 올라 있어도 실제로 혼자 사시면 해당됩니다.", "", "7, 8"], ["T24", "조손가구", "가구", "할아버지·할머니가 손주와 함께 사시는 가구입니다.", "", "7, 8"], ["T25", "고령부부(노인2인가구)", "가구", "어르신 두 분만 사시는 가구입니다.", "응급안전안심은 두 분 다 75세 이상이거나 질환·거동불편이 있을 때", "7, 8"], ["T26", "거동불편", "건강", "몸이 불편해서 혼자 다니거나 움직이기 어려운 상태입니다.", "", "8, 10"], ["T27", "유사·중복사업", "자격", "이미 비슷한 서비스를 받고 계시면 겹쳐서 받을 수 없다는 뜻입니다.", "노인맞춤돌봄은 장기요양 등급자, 가사간병 방문지원, 보훈재가복지, 장애인 활동지원을 받으면 제외", "7"], ["T28", "수행기관", "신청", "시청·구청을 대신해 실제로 서비스를 해드리는 복지관이나 센터입니다. 신청도 여기서 받습니다.", "", "2, 7, 10, 15"], ["T29", "동 행정복지센터(주민센터)", "신청", "우리 동네에 있는 신청 창구입니다. 어떤 복지든 먼저 여기에 물어보시면 됩니다.", "", "1, 7, 8"], ["T30", "치매안심센터", "신청", "보건소 안에 있는 치매 상담·검진 창구입니다. 대전에는 자치구마다 한 곳씩 다섯 곳이 있습니다.", "", "22, 23, 25"], ["T31", "신청주의", "신청", "신청을 해야만 받을 수 있다는 뜻입니다. 자격이 되어도 가만히 계시면 나오지 않습니다.", "기초연금이 대표적입니다", "1"], ["T32", "상시신청", "신청", "정해진 기간 없이 1년 내내 아무 때나 신청하실 수 있습니다.", "", ""], ["T33", "신청기간", "신청", "모집하는 기간이 정해져 있어 그때 신청해야 합니다.", "노인일자리는 보통 연초에 모집합니다", "2, 4, 14"], ["T34", "판정형 / 안내형", "신청", "판정형은 나이·소득 같은 자격을 따져 받을 수 있는지 가려내는 복지이고, 안내형은 자격 조건 없이 누구나 이용하는 시설·서비스입니다.", "", ""], ["T35", "공익활동형", "일자리", "노인일자리 가운데 기초연금을 받는 분이 참여하는 유형입니다. 활동비는 월 29만원입니다.", "", "2"], ["T36", "의사소견서", "서류", "병원에서 의사가 몸 상태를 적어주는 서류입니다. 장기요양을 신청할 때 필요할 수 있습니다.", "", "20, 21"]], "faq": [["Q01", "신청", "어디에 가서 신청해야 하나요?", "대부분 동 행정복지센터(주민센터)입니다.", "기초연금은 동 행정복지센터나 국민연금공단, 돌봄서비스는 동 행정복지센터나 수행기관(복지관·재가센터), 장기요양은 국민건강보험공단 장기요양센터, 치매 관련은 관할 구 치매안심센터(보건소)에서 신청합니다. 어디로 갈지 모르시면 동 행정복지센터에 먼저 물어보시면 안내해 드립니다.", "1, 7, 20, 22"], ["Q02", "신청", "가만히 있어도 나라에서 알아서 주나요?", "아니요. 신청해야 받으실 수 있습니다.", "기초연금처럼 대부분의 복지는 신청주의입니다. 자격이 되어도 신청하지 않으면 지급되지 않습니다. 만 65세 생일이 있는 달의 한 달 전에 미리 신청하시는 것이 좋습니다.", "1"], ["Q03", "자격", "재산이 조금 있는데 기초연금을 받을 수 있나요?", "재산이 있어도 받으실 수 있습니다.", "기초연금은 재산만 보는 것이 아니라 소득인정액으로 판단합니다. 소득인정액은 버는 돈에 재산을 돈으로 환산한 금액을 더한 것이고, 혼자 사시면 247만원, 부부는 395만 2천원 이하이면 받으실 수 있습니다. 정확한 금액은 동 행정복지센터에서 계산해 드립니다.", "1"], ["Q04", "자격", "두 가지 복지를 같이 받을 수 있나요?", "같이 받는 것도 있고, 하나만 되는 것도 있습니다.", "기초연금과 노인일자리는 함께 받으실 수 있습니다. 하지만 노인맞춤돌봄서비스는 장기요양 등급을 받으셨거나 가사간병 방문지원, 보훈재가복지, 장애인 활동지원을 받고 계시면 중복이라 받을 수 없습니다.", "7, 20"], ["Q05", "돌봄", "혼자 사시는데 갑자기 쓰러지면 어떻게 하나요?", "응급안전안심서비스를 신청해 보세요.", "집 안에 응급호출기와 화재·활동 감지기를 무료로 달아 드립니다. 쓰러지시거나 불이 나면 24시간 지켜보는 곳으로 신호가 가고 119로 연결됩니다. 동 행정복지센터나 관할 노인복지관에서 신청하세요.", "8"], ["Q06", "돌봄", "몸이 불편해서 혼자 생활이 어렵습니다.", "장기요양 등급을 먼저 신청해 보세요.", "국민건강보험공단(1577-1000)에 장기요양 인정신청을 하시면 직원이 집으로 찾아와 조사하고 등급을 정합니다. 등급을 받으면 집으로 요양보호사가 오는 방문요양, 낮에 다녀오는 주야간보호, 요양시설 입소 비용을 지원받습니다.", "20"], ["Q07", "치매", "요즘 자꾸 깜빡하는데 어디에 가야 하나요?", "가까운 치매안심센터에서 무료로 검사받으세요.", "보건소 안에 있는 치매안심센터에서 간단한 기억력 검사(CIST)를 무료로 해 드립니다. 결과에 이상이 있으면 진단검사와 감별검사까지 이어서 지원합니다. 대전에는 자치구마다 한 곳씩 있습니다.", "22, 25"], ["Q08", "치매", "치매 약값이 부담됩니다.", "월 3만원까지 지원받으실 수 있습니다.", "만 60세 이상으로 치매 진단을 받고 치매치료약을 드시는 분 가운데 기준 중위소득 120% 이하이면, 약값과 진료비 본인부담금을 월 3만원(연 36만원)까지 지원합니다. 관할 치매안심센터에 신청하세요.", "23"], ["Q09", "돈", "생활비가 부족합니다. 받을 수 있는 것이 있나요?", "기초연금과 노인일자리를 함께 확인해 보세요.", "기초연금은 만 65세 이상이면 매달 최대 34만 9천 700원(부부 55만 9천 520원)을 받습니다. 노인일자리는 가벼운 활동을 하고 월 29만원에서 63만원의 활동비를 받습니다. 두 가지는 함께 받으실 수 있습니다.", "1, 2"], ["Q10", "식사", "끼니를 챙기기 어렵습니다.", "경로식당이나 도시락 배달을 이용하세요.", "55세 이상 기초생활수급자·차상위계층은 경로식당을 무료로 이용하실 수 있고, 60세 이상이면서 기준 중위소득 150% 이하이면 급식비의 절반을 지원받습니다. 거동이 불편하시면 집으로 식사를 배달해 드립니다. 대전에 경로식당 25곳, 배달 23곳이 있습니다.", "10"], ["Q11", "여가", "집에만 있기 답답합니다.", "경로당과 노인복지관을 이용해 보세요.", "경로당은 대전에 881곳이 있어 걸어갈 수 있는 거리에 있습니다. 노인복지관은 9곳으로 여가·교양·건강 프로그램을 함께 운영합니다. 회원 등록만 하면 누구나 이용하실 수 있습니다.", "12, 13"], ["Q12", "안전", "어르신이 학대받는 것 같습니다. 어떻게 하나요?", "1577-1389로 전화하세요. 24시간 받습니다.", "본인이 아니어도, 목격한 사람이면 누구나 신고할 수 있습니다. 전화로 상담해 드리고 위험한 상황이면 학대피해노인 전용쉼터에서 지내며 보호받으실 수 있습니다.", "5"], ["Q13", "일자리", "나이가 많은데 일할 수 있나요?", "만 65세 이상이면 노인일자리에 참여할 수 있습니다.", "공익활동형은 기초연금을 받는 분이 대상이고 월 29만원, 역량활용형은 월 63만 4천원을 받습니다. 대전에 시니어클럽·복지관·대한노인회 등 50개 수행기관이 있고 보통 연초에 모집합니다.", "2"], ["Q14", "서류", "서류를 준비하기가 어렵습니다.", "신분증만 들고 먼저 가셔도 됩니다.", "대부분 신분증과 통장을 가져가시면 나머지는 담당자가 안내해 드립니다. 주민등록등본이나 가족관계증명서는 동 행정복지센터에서 바로 뗄 수 있습니다. 사업마다 필요한 서류가 달라 신청처에서 확인하시는 것이 가장 정확합니다.", ""], ["Q15", "기타", "대전에 살지 않아도 받을 수 있나요?", "대부분 대전에 사셔야 합니다.", "이 안내에 담긴 복지는 대부분 대전광역시에 주소를 두신 분이 대상입니다. 다만 치매상담콜센터(1899-9988)나 노인학대 신고(1577-1389)처럼 전국 어디서나 이용할 수 있는 것도 있습니다.", "5, 24"]], "tel": [["P01", "긴급", "119 (소방·구급)", "119", "불이 났거나 갑자기 크게 아프실 때", "24시간", "Y", "전국 공통"], ["P02", "긴급", "노인학대 신고·상담", "1577-1389", "어르신이 맞거나 함부로 대해지는 것을 보셨을 때", "24시간", "Y", "2026 노인복지 주요사업 · 노인보호전문기관"], ["P03", "상담", "보건복지상담센터", "129", "어떤 복지가 있는지 모르겠고 어디에 물을지 막막할 때", "평일 주간(자동응답 24시간)", "N", "silver_longterm2.png · 노인장기요양보험 안내"], ["P04", "치매", "치매상담콜센터", "1899-9988", "치매가 걱정되거나 돌보기 힘드실 때", "365일 07:00~22:00", "N", "silver_altz.png · 치매상담콜센터 운영"], ["P05", "치매", "중앙치매센터", "1666-0921", "치매에 관한 전국 정보가 궁금할 때", "평일 주간", "N", "silver_call.png (nid.or.kr)"], ["P06", "치매", "대전광역치매센터", "042-280-8966", "대전의 치매 사업이 궁금할 때", "평일 주간", "N", "silver_call.png (daejeon.nid.or.kr)"], ["P07", "치매", "동구 치매안심센터", "042-621-6011", "동구에 사시며 기억력 검사나 치매 상담이 필요할 때", "평일 주간", "N", "silver_call.png"], ["P08", "치매", "중구 치매안심센터", "042-288-8180", "중구에 사시며 기억력 검사나 치매 상담이 필요할 때", "평일 주간", "N", "silver_call.png"], ["P09", "치매", "서구 치매안심센터", "042-288-4470", "서구에 사시며 기억력 검사나 치매 상담이 필요할 때", "평일 주간", "N", "silver_call.png"], ["P10", "치매", "유성구 치매안심센터", "042-611-5018", "유성구에 사시며 기억력 검사나 치매 상담이 필요할 때", "평일 주간", "N", "silver_call.png"], ["P11", "치매", "대덕구 치매안심센터", "042-608-5426", "대덕구에 사시며 기억력 검사나 치매 상담이 필요할 때", "평일 주간", "N", "silver_call.png"], ["P12", "요양", "노인장기요양보험 고객센터", "1577-1000", "혼자 생활이 어려워 요양 도움을 받고 싶을 때", "평일 주간", "N", "silver_longterm2.png · 국민건강보험공단"]], "cal": [["상시", 1, "기초연금 지급", "만 65세 생일이 있는 달의 한 달 전에 미리 신청", "생일 전달에 동 행정복지센터에 가세요. 늦게 신청하면 그만큼 늦게 받습니다."], ["1월", 2, "노인일자리(사회활동) 지원 사업", "매년 연초 수행기관별 모집 공고", "연말부터 복지관·대한노인회에 모집 시기를 물어보세요."], ["2월", 14, "대전광역시립요양원 운영", "2026년 2~3월 입소자 신청 접수", "정원이 108명이라 서둘러 문의하시는 것이 좋습니다."], ["3월", 14, "대전광역시립요양원 운영", "2026년 3월 개원 예정", ""], ["3월", 4, "중장년지원센터 운영", "2026년 3월부터 12월까지 교육과정 운영", "과정별로 모집하니 센터에 일정을 확인하세요."], ["7월", 18, "대전추모공원 제4봉안당 건립", "2026년 7월 준공 예정", "개인이 신청하는 사업은 아닙니다."], ["12월", 19, "대전추모공원 제3자연장지 조성", "2027년 12월 준공 예정 (단계별 조성)", "개인이 신청하는 사업은 아닙니다."], ["수시", 9, "요양보호사 교육기관 및 자격관리", "교육기관별로 과정이 열릴 때 접수", "대전에 교육기관이 33곳 있습니다."], ["상시", 7, "노인맞춤돌봄서비스", "연중 신청", ""], ["상시", 8, "독거노인·장애인 응급안전안심서비스", "연중 신청", ""], ["상시", 10, "경로식당 운영 및 재가노인 식사배달 지원", "연중 신청", ""], ["상시", 15, "재가노인지원서비스 운영 지원", "연중 신청", ""], ["상시", 16, "노인복지시설 지원", "연중 신청", ""], ["상시", 20, "노인장기요양보험 급여 이용", "연중 인정신청 가능", ""], ["상시", 22, "치매조기검진사업", "보건소 운영시간 중 연중 상시", ""], ["상시", 23, "치매치료관리비 지원 사업", "연중 신청", "예산이 정해져 있어 일찍 신청하시는 것이 좋습니다."], ["상시", 12, "노인복지관 운영", "운영시간 내 상시 이용 (프로그램은 별도 접수)", ""], ["상시", 13, "경로당 운영", "상시 이용", ""]], "guide": [["S1", "혼자 지내시는 것이 걱정될 때", "🏠", "가족과 떨어져 혼자 지내시거나, 하루 종일 말할 사람이 없을 때 도움받을 수 있는 것들입니다.", "동 행정복지센터에 노인맞춤돌봄서비스를 신청하세요", "집 안에 응급호출기를 다는 응급안전안심서비스도 함께 신청하세요", "끼니가 어려우시면 경로식당이나 식사배달을 이용하세요", "7, 8, 10, 15"], ["S2", "기억력이 예전 같지 않을 때", "🧠", "깜빡하는 일이 잦아졌다면 미루지 말고 검사부터 받아보시는 것이 좋습니다.", "가까운 치매안심센터에서 무료 기억력 검사를 받으세요", "진단을 받으셨다면 치매치료관리비 지원을 신청하세요 (월 3만원)", "돌보기가 힘드시면 1899-9988로 언제든 상담하세요", "22, 23, 25, 24, 21"], ["S3", "혼자서 생활하기 어려워지셨을 때", "🧑‍🦽", "씻기, 식사, 화장실 이용이 혼자서 어려워지셨다면 장기요양부터 신청하세요.", "국민건강보험공단(1577-1000)에 장기요양 인정신청을 하세요", "등급을 받으면 방문요양·주야간보호·요양시설을 이용할 수 있습니다", "형편이 어려우면 본인부담금을 절반까지 줄여 드립니다", "20, 14, 16, 11"], ["S4", "생활비가 부족할 때", "💰", "매달 받는 돈과 활동비를 함께 확인해 보세요. 두 가지는 같이 받으실 수 있습니다.", "만 65세가 넘으셨다면 기초연금을 신청하세요", "노인일자리에 참여하면 매달 활동비를 더 받으실 수 있습니다", "식비를 줄이려면 경로식당을 이용해 보세요", "1, 2, 10"], ["S5", "일하고 싶으실 때", "💼", "나이가 있어도 참여할 수 있는 일자리와 배움의 기회가 있습니다.", "만 65세 이상이면 노인일자리에 신청하세요 (보통 연초 모집)", "아직 5060 세대라면 중장년지원센터에서 재취업 교육을 받으세요", "요양보호사 자격증에 도전해 보시는 것도 방법입니다", "2, 3, 4, 9"], ["S6", "심심하고 사람이 그리울 때", "🎈", "걸어갈 수 있는 거리에 함께 어울릴 곳이 있습니다.", "가장 가까운 경로당을 찾아보세요 (대전에 881곳)", "노인복지관에서 여가·교양·건강 프로그램에 참여하세요", "노인교실이나 효문화진흥원 프로그램도 이용해 보세요", "13, 12, 6"], ["S7", "부당한 대우를 받고 계실 때", "🚨", "참지 마시고 알리세요. 본인이 아니어도 신고할 수 있습니다.", "1577-1389로 전화하세요. 밤낮 없이 24시간 받습니다", "위험한 상황이면 학대피해노인 전용쉼터에서 지내실 수 있습니다", "상담과 치유 프로그램, 이후 관리까지 도와드립니다", "5"], ["S8", "장례를 준비할 때", "🌷", "대전시가 운영하는 장사시설을 이용하실 수 있습니다.", "화장·봉안·자연장은 대전추모공원에서 이용합니다", "대전광역시시설관리공단에 이용 방법을 문의하세요", "사용료가 있으니 미리 확인해 두시면 좋습니다", "17"]], "doc": [["D01", "신분증(주민등록증·운전면허증)", "본인이 소지", "거의 모든 신청", "늘 챙겨 가세요. 이것만 있어도 상담은 받으실 수 있습니다.", "일반 안내"], ["D02", "통장 사본", "거래 은행", "돈을 받는 복지 (기초연금, 일자리 활동비, 치매치료관리비)", "본인 이름으로 된 통장이어야 합니다.", "일반 안내"], ["D03", "주민등록등본", "동 행정복지센터 · 정부24", "가구원 수나 거주지를 확인할 때", "동 행정복지센터에서 바로 뗄 수 있습니다.", "일반 안내"], ["D04", "가족관계증명서", "동 행정복지센터 · 정부24", "부부가구 여부나 가족 관계를 확인할 때", "기초연금 부부가구 기준을 볼 때 쓰일 수 있습니다.", "일반 안내"], ["D05", "진단서 또는 의사소견서", "진료받은 병원", "장기요양 신청, 치매치료관리비 지원", "치매치료관리비는 F00~F03·G30 진단이 필요합니다.", "2026 노인복지 주요사업 / silver_altz.png"], ["D06", "장기요양인정 신청서", "국민건강보험공단 장기요양센터", "장기요양 급여 이용", "공단에 양식이 있습니다. 직원이 작성을 도와드립니다.", "silver_longterm.png"], ["D07", "약 처방전·영수증", "병원 · 약국", "치매치료관리비 지원", "치매치료약을 드시고 있다는 것을 보여주는 서류입니다.", "silver_altz.png"], ["D08", "참여 신청서", "수행기관(복지관·시니어클럽 등)", "노인일자리, 교육과정", "기관에 양식이 비치되어 있습니다.", "2026 노인복지 주요사업"]], "menu": [["M1", "이럴 때 어떻게 하나요", "🧭", "상황을 고르면 무엇부터 하면 되는지 순서대로 알려드립니다.", "상황별길잡이", 1], ["M2", "어려운 말 풀이", "📖", "소득인정액, 장기요양등급 같은 어려운 말을 쉬운 말로 풀어 드립니다.", "쉬운말사전", 2], ["M3", "자주 묻는 질문", "❓", "다른 어르신들이 많이 물어보신 것을 모았습니다.", "자주묻는질문", 3], ["M4", "전화번호 모음", "☎", "급할 때 바로 거실 수 있는 번호를 큰 글씨로 모았습니다.", "전화번호부", 4], ["M5", "언제 신청하나요", "📅", "달마다 신청할 수 있는 복지를 정리했습니다.", "신청일정달력", 5], ["M6", "무슨 서류가 필요한가요", "📄", "어떤 서류를 어디서 떼는지 알려드립니다.", "서류안내", 6]]};
 
 // ---------- 탭 전환 ----------
-const VIEWS = {mine:"viewMine", find:"viewFind", info:"viewInfo"};
-const TABS  = {mine:"tabMine",  find:"tabFind",  info:"tabInfo"};
+const VIEWS = {mine:"viewMine", find:"viewFind", info:"viewInfo", my:"viewMy"};
+const TABS  = {mine:"tabMine",  find:"tabFind",  info:"tabInfo",  my:"tabMy"};
 function switchTab(which){
   Object.keys(VIEWS).forEach(k=>{
     document.getElementById(VIEWS[k]).hidden = (k!==which);
     document.getElementById(TABS[k]).setAttribute("aria-selected", k===which);
   });
   if(which==="info") showMenu();
+  if(which==="my")   renderMyPage();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 Object.keys(TABS).forEach(k=>{ document.getElementById(TABS[k]).onclick = ()=>switchTab(k); });

@@ -21,6 +21,11 @@
      ------------------------------------------------------------------- */
   let currentUser = null;                 // 로그인한 사용자 (없으면 null = 비회원)
   const statusMap = {};                   // { 복지id: 'received' | 'applied' }
+
+  // 마이페이지(index.html)가 읽어 가는 창구입니다.
+  // 이 파일이 없어도 마이페이지의 별표 목록은 동작하도록 그쪽에서 확인합니다.
+  window.getCurrentUser      = () => currentUser;
+  window.getWelfareStatusAll = () => Object.assign({}, statusMap);
   let guestHintShown = false;             // 비회원 안내를 너무 자주 띄우지 않으려는 표시
 
   /* -------------------------------------------------------------------
@@ -421,6 +426,7 @@
     if (next === null) delete statusMap[id];
     else statusMap[id] = next;
     paintStatus(id);
+    if (window.refreshMyPage) window.refreshMyPage();
 
     if (currentUser) {
       if (next === null) {
@@ -461,6 +467,7 @@
       (stRes.data || []).forEach((r) => { statusMap[r.welfare_id] = r.status; });
 
       render();                           // 별표 다시 그리기
+      if (window.refreshMyPage) window.refreshMyPage();
     } catch (e) {
       console.warn("사용자 데이터 불러오기 오류:", e.message);
     }
@@ -470,6 +477,7 @@
     favs.clear();
     for (const k in statusMap) delete statusMap[k];
     render();
+    if (window.refreshMyPage) window.refreshMyPage();
   }
 
   /* -------------------------------------------------------------------
