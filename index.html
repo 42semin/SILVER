@@ -87,7 +87,7 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.5px;margin:0}
 /* ---------- 썸네일 그리드 ---------- */
 .grid{
   max-width:1120px;margin:12px auto 60px;padding:0 24px;
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
 }
 .card{
   position:relative;background:var(--card);border-radius:20px;padding:20px 20px 18px;
@@ -152,7 +152,6 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.5px;margin:0}
 
 /* ---------- 쉬운 설명 먼저 보여주기 (칸을 누르면 자세한 안내가 펼쳐짐) ---------- */
 .ez{padding:20px 24px 6px}
-.ezlead{font-family:var(--read);font-size:17px;color:#7a7264;margin:0 4px 16px;line-height:1.6}
 .ezcard{border:2px solid var(--line);border-radius:20px;margin-bottom:14px;overflow:hidden;background:#fff}
 .ezcard.open{border-color:var(--accent)}
 .eztop{
@@ -187,10 +186,12 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.5px;margin:0}
 .btn.easybtn:hover{filter:brightness(1.05)}
 .btn.docbtn{background:#F1ECDD;color:#4a4a4a}
 .btn.docbtn:hover{background:#E9E2CE}
-.easy-note{font-family:var(--read);font-size:15px;color:#999;text-align:center;padding:0 28px 4px}
 
 footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-size:14px;font-family:var(--read)}
 
+@media(max-width:860px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+}
 @media(max-width:520px){
   h1{font-size:27px}
   .grid{grid-template-columns:1fr}
@@ -490,15 +491,6 @@ footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-
 .agehint.ok{background:#E8F7EE;border:2px solid #BEE6CE;color:#0E6B3C}
 
 /* ---------- 선택 칸만 다시 입력하기 (피드백: 2113 / 1408) ---------- */
-.editwrap{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
-.editwrap .etitle{font-family:var(--ui);font-size:18px;font-weight:800;color:#5C5C5C;margin-bottom:10px}
-.editchips{display:flex;gap:8px;flex-wrap:wrap}
-.editchip{
-  font-family:var(--ui);font-size:17px;font-weight:700;padding:11px 16px;border-radius:999px;
-  border:2px solid var(--line);background:#FFFDF6;color:#444;cursor:pointer;text-align:left;
-}
-.editchip:hover{border-color:#17B0A0;color:#0e7d71}
-.editchip:focus-visible{outline:3px solid #17B0A0;outline-offset:2px}
 .navbtn.back{background:#17B0A0;color:#fff}
 .editbanner{
   font-family:var(--read);font-size:18px;color:#0e7d71;background:#DDF6F2;
@@ -531,6 +523,126 @@ footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-
 .card .due{
   font-family:var(--read);font-size:16px;line-height:1.5;color:#8A6D1F;
   background:#FFF7E0;border-radius:12px;padding:10px 13px;margin-top:9px;
+}
+
+/* ---------- 결과: 제목만 보여주는 인덱스 (피드백: 한 행에 세 개 · 제목만) ----------
+   스크롤을 줄이려고 카드 대신 아이콘+제목만 한 줄에 세 개씩 놓고,
+   누르면 지금까지와 같은 상세 팝업이 뜹니다.                                */
+.idxgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:4px}
+.idx{
+  position:relative;display:flex;flex-direction:column;align-items:center;gap:9px;
+  background:#fff;border:2px solid var(--line);border-top:6px solid var(--accent);
+  border-radius:18px;padding:16px 12px 15px;cursor:pointer;text-align:center;
+  box-shadow:0 3px 12px rgba(90,80,50,.08);transition:transform .12s ease,box-shadow .12s ease;
+  font-family:var(--ui);min-width:0;
+}
+.idx:hover{transform:translateY(-3px);box-shadow:0 12px 24px rgba(90,80,50,.16)}
+.idx:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.idx .iic{
+  width:54px;height:54px;flex:none;border-radius:16px;display:grid;place-items:center;
+  font-size:28px;background:var(--tint);
+}
+.idx .itt{font-size:18px;font-weight:800;line-height:1.3;letter-spacing:-.3px;color:var(--ink);word-break:keep-all;overflow-wrap:anywhere}
+.idx .iflag{
+  font-size:14px;font-weight:800;color:#2758C7;background:#E3ECFF;
+  border-radius:8px;padding:4px 9px;
+}
+.idx.check{border-top-color:#C9A227}
+
+/* ---------- 결과 요약의 버튼 두 개 ---------- */
+.rsumbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.editall{
+  flex:1 1 180px;font-family:var(--ui);font-size:19px;font-weight:800;
+  padding:15px 20px;border-radius:14px;border:2px solid #17B0A0;
+  background:#DDF6F2;color:#0E6B3C;cursor:pointer;
+}
+.editall:hover{background:#CBEFE9}
+.editall:focus-visible{outline:3px solid #17B0A0;outline-offset:2px}
+.rsum .redo{flex:1 1 180px;margin-top:0}
+
+/* ---------- 입력한 내용 확인하기 (피드백: '수정하기' → 화살표로 넘겨 보기) ---------- */
+.review{margin:18px 0 60px}
+.rvlead{font-family:var(--read);font-size:19px;line-height:1.65;color:#444;background:#fff;
+  border:1px solid var(--line);border-radius:16px;padding:16px 19px;margin:0 0 16px}
+.rvbar{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.rvarrow{
+  flex:none;width:64px;height:64px;border-radius:20px;border:2px solid var(--line);
+  background:#fff;color:#0E6B3C;font-size:34px;font-weight:800;line-height:1;cursor:pointer;
+}
+.rvarrow:hover:not(:disabled){background:#DDF6F2;border-color:#17B0A0}
+.rvarrow:disabled{opacity:.35;cursor:not-allowed}
+.rvarrow:focus-visible{outline:3px solid #17B0A0;outline-offset:2px}
+.rvnow{flex:1;text-align:center}
+.rvnow .rvn{display:block;font-family:var(--ui);font-size:16px;font-weight:800;color:#7a7264}
+.rvnow .rvs{display:block;font-family:var(--ui);font-size:24px;font-weight:800;letter-spacing:-.4px}
+.rvcard{background:#fff;border:2px solid var(--line);border-radius:22px;padding:24px 26px;box-shadow:var(--shadow)}
+.rvq{font-size:25px;font-weight:800;letter-spacing:-.5px;margin:0 0 14px;line-height:1.35}
+.arow{display:flex;gap:14px;flex-wrap:wrap;padding:13px 0;border-top:1px dashed var(--line)}
+.arow b{flex:0 0 42%;font-family:var(--ui);font-size:19px;font-weight:800;color:#5C5C5C}
+.arow span{flex:1;font-family:var(--read);font-size:21px;color:var(--ink)}
+.rvedit{
+  width:100%;margin-top:18px;font-family:var(--ui);font-size:20px;font-weight:800;
+  padding:16px;border-radius:15px;border:none;background:#17B0A0;color:#fff;cursor:pointer;
+}
+.rvedit:hover{filter:brightness(1.05)}
+.rvdots{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 0}
+.rvdot{
+  font-family:var(--ui);font-size:15px;font-weight:700;padding:8px 13px;border-radius:999px;
+  border:2px solid var(--line);background:#FFFDF6;color:#7a7264;cursor:pointer;
+}
+.rvdot.on{background:#17B0A0;border-color:#17B0A0;color:#fff}
+.rvdone{
+  width:100%;margin-top:16px;font-family:var(--ui);font-size:21px;font-weight:800;
+  padding:18px;border-radius:16px;border:2px solid var(--line);background:#fff;color:#444;cursor:pointer;
+}
+.rvdone:hover{background:#F6F2E6}
+
+/* ---------- 상세 팝업: 왜 이 복지가 나왔는지 ---------- */
+.whycard{border-radius:18px;padding:17px 20px;margin:0 4px 14px;border:2px solid #BEE6CE;background:#E8F7EE}
+.whycard.check{border-color:#F2D98C;background:#FFF8E1}
+.whycard .wtitle{font-family:var(--ui);font-size:18px;font-weight:800;color:#0E6B3C;margin-bottom:7px}
+.whycard.check .wtitle{color:#8A6D1F}
+.whycard .wtxt{font-family:var(--read);font-size:19px;line-height:1.6;color:#33503f}
+.whycard.check .wtxt{color:#4a4134}
+.whycard .wtxt.sub{font-size:17px;margin-top:7px;color:#5C5C5C}
+
+/* ---------- 상세 팝업: 바로 전화·홈페이지·지도로 이어 주기 ---------- */
+.ezcard.conn{border-color:#9fd9d1}
+.actwrap{display:flex;flex-direction:column;gap:10px;padding:16px 18px 18px}
+.actbtn{
+  display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
+  border:2px solid var(--line);border-radius:16px;padding:15px 17px;background:#fff;
+}
+.actbtn:hover{border-color:#17B0A0;background:#F4FBF9}
+.actbtn .aic{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:24px;background:#F1ECDD}
+.actbtn .atx{min-width:0}
+.actbtn .atx b{display:block;font-family:var(--ui);font-size:19px;font-weight:800;letter-spacing:-.3px}
+.actbtn .atx span{display:block;font-family:var(--read);font-size:17px;color:#6b6455;margin-top:3px;word-break:break-all}
+.actbtn.tel{border-color:#BEE6CE;background:#F3FBF6}
+.actbtn.tel .aic{background:#DDF6F2;color:#0E6B3C}
+.actbtn.tel .atx b{color:#0E6B3C}
+.actbtn.web .aic{background:#E3ECFF}
+.actbtn.map .aic{background:#FFF2DC}
+
+/* ---------- 어려운 말 풀이: 단어만 작은 토큰으로 (피드백) ---------- */
+.tokwrap{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}
+.tok{
+  font-family:var(--ui);font-size:19px;font-weight:700;padding:12px 17px;border-radius:999px;
+  border:2px solid var(--line);background:#fff;color:#3f3f3f;cursor:pointer;transition:.12s;
+}
+.tok:hover{border-color:#17B0A0;color:#0e7d71}
+.tok.on{background:#17B0A0;border-color:#17B0A0;color:#fff}
+.tok:focus-visible{outline:3px solid #17B0A0;outline-offset:2px}
+.tokhint{font-family:var(--read);font-size:18px;color:#6b6455;background:#F6F2E6;
+  border-radius:14px;padding:15px 18px;margin:0;line-height:1.6}
+
+@media(max-width:620px){
+  .idxgrid{gap:9px}
+  .idx{padding:13px 8px 12px}
+  .idx .iic{width:46px;height:46px;font-size:24px;border-radius:13px}
+  .idx .itt{font-size:16px}
+  .arow b{flex:1 1 100%}
+  .rvarrow{width:54px;height:54px;font-size:28px}
 }
 </style>
 </head>
@@ -582,6 +694,7 @@ footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-
     <div class="wrapmid"><div class="qcard" id="qCard"></div></div>
   </div>
 
+  <div id="mineReview" hidden class="wrapmid"></div>
   <div id="mineResult" hidden class="wrapmid"></div>
 </section>
 
@@ -1115,6 +1228,128 @@ function ezPlain(q, body){
   </div>`;
 }
 
+/* =====================================================================
+   복지마다 "실제로 이어 주기" (피드백: 안내만 하지 말고 링크와 전화를 걸어 주세요)
+   - 홈페이지: 2026-11-18 에 직접 열어 확인한 공식 누리집만 넣었습니다.
+               확인되지 않은 주소는 넣지 않고, 대전광역시·복지로로 보냅니다.
+   - 전화번호: 데이터의 '문의' 칸에 적힌 번호만 씁니다. (없는 번호는 만들지 않습니다)
+   - 지도    : 주소나 기관 이름으로 지도 검색을 엽니다.
+               {구}·{동} 자리에는 설문에서 고르신 곳이 들어가, 가까운 곳을 찾아 드립니다.
+   ===================================================================== */
+const SITE = {
+  기초연금:  ["기초연금 (보건복지부)",    "https://basicpension.mohw.go.kr"],
+  국민연금:  ["국민연금공단",             "https://www.nps.or.kr"],
+  복지로:    ["복지로 (복지 종합 안내)",  "https://www.bokjiro.go.kr"],
+  장기요양:  ["노인장기요양보험",         "https://www.longtermcare.or.kr"],
+  중앙치매:  ["중앙치매센터",             "https://www.nid.or.kr"],
+  대전치매:  ["대전광역치매센터",         "https://daejeon.nid.or.kr"],
+  노인일자리:["노인일자리 여기",          "https://www.seniorro.or.kr"],
+  효문화:    ["한국효문화진흥원",         "https://www.k-hyo.kr"],
+  장사정보:  ["e하늘 장사정보시스템",     "https://www.15774129.go.kr"],
+  대전시:    ["대전광역시 누리집",        "https://www.daejeon.go.kr"]
+};
+const WEBLINK = {
+  1:["기초연금","국민연금","복지로"], 2:["노인일자리","복지로"], 3:["대전시"], 4:["대전시"],
+  5:["복지로"], 6:["효문화"], 7:["복지로"], 8:["복지로"], 9:["대전시"], 10:["대전시"],
+  11:["장기요양"], 12:["대전시"], 13:["대전시"], 14:["대전시"], 15:["대전시"], 16:["대전시"],
+  17:["장사정보"], 18:["장사정보"], 19:["장사정보"], 20:["장기요양","복지로"], 21:["장기요양"],
+  22:["대전치매"], 23:["대전치매"], 24:["중앙치매"], 25:["대전치매"]
+};
+const PLACEQ = {
+  1:[["가까운 동 행정복지센터","{구} 행정복지센터"],["국민연금공단 지사","대전 국민연금공단"]],
+  2:[["노인일자리 수행기관","{구} 시니어클럽"],["대한노인회 지회","{구} 대한노인회"]],
+  3:[["우리 구청","{구}청"]],
+  4:[["대전중장년지원센터","대전중장년지원센터"]],
+  5:[["대전노인보호전문기관","대전 서구 문정로170번길 103"]],
+  6:[["한국효문화진흥원","대전 중구 뿌리공원로 45"]],
+  7:[["가까운 동 행정복지센터","{구} 행정복지센터"],["노인복지관","{구} 노인복지관"]],
+  8:[["가까운 동 행정복지센터","{구} 행정복지센터"],["노인복지관","{구} 노인복지관"]],
+  9:[["요양보호사 교육원","대전 요양보호사 교육원"]],
+  10:[["경로식당이 있는 복지관","{구} 노인복지관"]],
+  11:[["국민건강보험공단","{구} 국민건강보험공단"]],
+  12:[["노인복지관","{구} 노인복지관"]],
+  13:[["가까운 경로당","{동} 경로당"]],
+  14:[["대전광역시립요양원","대전 동구 판암로 128-52"]],
+  15:[["재가노인지원서비스센터","{구} 재가노인지원서비스센터"]],
+  16:[["양로시설","대전 양로원"]],
+  17:[["대전추모공원","대전추모공원"]],
+  18:[["대전추모공원","대전추모공원"]],
+  19:[["대전추모공원","대전추모공원"]],
+  20:[["국민건강보험공단 장기요양센터","{구} 국민건강보험공단"]],
+  21:[["국민건강보험공단 장기요양센터","{구} 국민건강보험공단"]],
+  22:[["우리 구 치매안심센터","{구} 치매안심센터"]],
+  23:[["우리 구 치매안심센터","{구} 치매안심센터"]],
+  25:[["우리 구 치매안심센터","{구} 치매안심센터"]]
+};
+// 구별 치매안심센터 번호 — 데이터의 '문의' 칸에 적힌 번호를 구별로 갈라 둔 것입니다.
+const GU_TEL = {동구:"042-621-6011", 중구:"042-288-8180", 서구:"042-288-4470",
+                유성구:"042-611-5018", 대덕구:"042-608-5426"};
+const PHONES = {
+  5:[["노인학대 신고·상담 (24시간)","1577-1389"]],
+  9:[["대전요양보호사교육원","042-710-6611"]],
+  11:[["국민건강보험공단","1577-1000"]],
+  20:[["노인장기요양보험 고객센터","1577-1000"],["보건복지상담센터","129"]],
+  21:[["노인장기요양보험 고객센터","1577-1000"]],
+  22:[["대전광역치매센터","042-280-8966"]],
+  23:[["대전광역치매센터","042-280-8966"]],
+  24:[["치매상담콜센터 (아침 7시~밤 10시)","1899-9988"],["중앙치매센터","1666-0921"],["대전광역치매센터","042-280-8966"]]
+};
+
+// 치매안심센터는 사시는 구의 번호를 맨 위에 올려 드립니다.
+function telList(d){
+  const out = (PHONES[d.id] || []).slice();
+  if(d.id===22 || d.id===23 || d.id===25){
+    if(GU_TEL[P.gu]) out.unshift([P.gu + " 치매안심센터", GU_TEL[P.gu]]);
+    else Object.keys(GU_TEL).forEach(g=> out.push([g + " 치매안심센터", GU_TEL[g]]));
+  }
+  return out;
+}
+function mapQ(t){
+  const gu = (P.gu && P.gu !== "밖") ? P.gu : "대전";
+  return t.replace("{구}", gu).replace("{동}", (gu + " " + (P.dong || "")).trim());
+}
+function connectCard(d){
+  const sites  = (WEBLINK[d.id] || []).map(k=>SITE[k]).filter(Boolean);
+  const tels   = telList(d);
+  const places = PLACEQ[d.id] || [];
+  if(!sites.length && !tels.length && !places.length) return "";
+  let h = `<div class="ezcard conn">
+    <div class="eztop static">
+      <span class="ezqa"><span class="ezq">🔗 바로 이어 드립니다</span>
+      <span class="eza">누르시면 전화가 바로 걸리고, 홈페이지와 지도가 열립니다.</span></span>
+    </div>
+    <div class="actwrap">`;
+  tels.forEach(([label,num])=>{
+    h += `<a class="actbtn tel" href="tel:${num.replace(/-/g,"")}">
+      <span class="aic">☎</span>
+      <span class="atx"><b>${label}</b><span>${num} — 누르면 바로 걸립니다</span></span></a>`;
+  });
+  places.forEach(([label,q])=>{
+    const qq = mapQ(q);
+    h += `<a class="actbtn map" href="https://map.kakao.com/?q=${encodeURIComponent(qq)}" target="_blank" rel="noopener noreferrer">
+      <span class="aic">📍</span>
+      <span class="atx"><b>${label}</b><span>지도에서 ‘${qq}’ 찾아보기</span></span></a>`;
+  });
+  sites.forEach(([label,url])=>{
+    h += `<a class="actbtn web" href="${url}" target="_blank" rel="noopener noreferrer">
+      <span class="aic">🌐</span>
+      <span class="atx"><b>${label}</b><span>홈페이지 열기</span></span></a>`;
+  });
+  return h + `</div></div>`;
+}
+
+/* 맞춤 복지 결과에서 인덱스를 눌러 들어오셨을 때, 왜 그 복지가 나왔는지 다시 보여 줍니다.
+   (결과 화면이 제목만 보여주므로, 판정 이유는 이 팝업에서 읽으시게 됩니다) */
+let RESULT_WHY = {};
+function whyCard(d){
+  const r = RESULT_WHY[d.id];
+  if(!r || !r.why) return "";
+  return `<div class="whycard ${r.kind}">
+    <div class="wtitle">${r.kind === "yes" ? "✅ 받으실 수 있어요" : "🔎 확인이 필요해요"}</div>
+    <div class="wtxt">${r.why}</div>
+    ${r.nearby ? `<div class="wtxt sub">${r.nearby}</div>` : ""}</div>`;
+}
+
 function openModal(d){
   const [pc,pt] = PERIOD[d.period];
   modal.style.setProperty("--accent",`var(--c-${d.field})`);
@@ -1130,8 +1365,7 @@ function openModal(d){
     </div>
 
     <div class="ez" id="mEz">
-      <p class="ezlead">쉬운 말로 먼저 알려드립니다. 더 알고 싶은 칸을 누르시면 <b>원래 안내 그대로</b> 펼쳐집니다.</p>
-
+      ${whyCard(d)}
       ${dueCard(d)}
 
       ${ezCard("🙋 누가 받나요?", d.easy.who,
@@ -1149,7 +1383,7 @@ function openModal(d){
       ${ezPlain("📄 무슨 서류가 필요한가요?", d.docs)}
       ${ezPlain("☎ 어디에 물어보나요?", d.contact)}
 
-      <p class="easy-note">더 궁금하면 가까운 동 행정복지센터(주민센터)에 물어보세요.</p>
+      ${connectCard(d)}
     </div>
 
     <div class="m-actions">
@@ -1223,7 +1457,7 @@ function wrapTerms(root){
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(n){
       if(!n.nodeValue || !n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
-      if(n.parentElement.closest(".term,.label,.badge,.dw,.ptitle,h1,h2,h3")) return NodeFilter.FILTER_REJECT;
+      if(n.parentElement.closest(".term,.label,.badge,.dw,.ptitle,.actbtn,.idx,.tok,.rvdot,h1,h2,h3")) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     }});
   const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
@@ -1387,18 +1621,45 @@ function openInfo(menuId){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
+/* 어려운 말 풀이 — 처음에는 단어만 작은 토큰으로 보여 드립니다. (피드백)
+   태그와 뜻을 36개 모두 늘어놓으면 글이 너무 많아 찾기 어려우므로,
+   누르신 단어 하나의 뜻과 '관련된 복지로 넘어가기'만 아래에 펼쳐 보여 드립니다. */
 function setupDict(){
   const q = infoPanel.querySelector("#dictQ");
   const list = infoPanel.querySelector("#dictList");
-  function draw(){
-    const k = (q.value||"").trim();
-    const rows = INFO.dict.filter(d=> !k || d[1].includes(k) || d[3].includes(k) || d[2].includes(k));
-    if(!rows.length){ list.innerHTML = `<p class="empty">‘${k}’에 해당하는 말을 찾지 못했습니다. 다른 말로 찾아보세요.</p>`; return; }
-    list.innerHTML = rows.map(d=>`<div class="ditem">
+  let openWord = null;
+
+  function detail(d){
+    return `<div class="ditem">
       <div><span class="dw">${d[1]}</span><span class="dc">${d[2]}</span></div>
       <p class="dm">${d[3]}</p>
       ${d[4]?`<p class="dx">${d[4]}</p>`:""}
-      ${relChips(d[5])}</div>`).join("");
+      ${relChips(d[5])}</div>`;
+  }
+
+  function draw(){
+    const k = (q.value||"").trim();
+    const rows = INFO.dict.filter(d=> !k || d[1].includes(k) || d[3].includes(k) || d[2].includes(k));
+    if(!rows.length){
+      list.innerHTML = `<p class="empty">‘${k}’에 해당하는 말을 찾지 못했습니다. 다른 말로 찾아보세요.</p>`;
+      return;
+    }
+    if(openWord && !rows.some(d=>d[1]===openWord)) openWord = null;   // 검색으로 사라진 단어는 닫습니다
+    const open = openWord ? DICTMAP[openWord] : null;
+
+    list.innerHTML = `<div class="tokwrap">`
+      + rows.map(d=>`<button class="tok ${d[1]===openWord?"on":""}" type="button"
+            data-w="${d[1]}" aria-expanded="${d[1]===openWord}">${d[1]}</button>`).join("")
+      + `</div>`
+      + (open ? detail(open)
+              : `<p class="tokhint">알고 싶은 말을 눌러 주세요. 뜻과 함께, 그 말이 나오는 복지로 넘어갈 수 있습니다.</p>`);
+
+    list.querySelectorAll(".tok").forEach(b=> b.onclick = ()=>{
+      openWord = (openWord === b.dataset.w) ? null : b.dataset.w;
+      draw();
+      const el = list.querySelector(".ditem");
+      if(el) el.scrollIntoView({block:"nearest", behavior:"smooth"});
+    });
     list.querySelectorAll("[data-open]").forEach(b=>{
       b.onclick = ()=>{ const dd = DATA.find(x=>x.id===parseInt(b.dataset.open)); if(dd) openModal(dd); };
     });
@@ -1607,11 +1868,11 @@ function drawStep(){
   document.getElementById("pStep").textContent = editOne
     ? `${s.s} 칸만 고쳐 넣는 중입니다 (${stepIdx+1} / ${STEPS.length} 단계)`
     : `${stepIdx+1} / ${STEPS.length} 단계`;
-  qCard.innerHTML = `${editOne?`<p class="editbanner">✏ <b>${s.s}</b>만 다시 골라 주세요. 다른 칸은 그대로 두었습니다.</p>`:""}
+  qCard.innerHTML = `${editOne?`<p class="editbanner">✏️ <b>${s.s}</b>만 다시 골라 주세요. 다른 칸은 그대로 두었습니다.</p>`:""}
     <h2 class="qtitle">${s.t}</h2><p class="qhelp">${s.h}</p>${s.build()}
     <div class="navrow">
       ${editOne
-        ? `<button class="navbtn back" id="nextBtn">✅ 다 고쳤습니다 · 결과 보기</button>
+        ? `<button class="navbtn back" id="nextBtn">✅ 다 고쳤습니다 · ${fromReview ? "확인 화면으로" : "결과 보기"}</button>
            <button class="navbtn prev" id="prevBtn">취소</button>`
         : `<button class="navbtn prev" id="prevBtn" ${stepIdx===0?"disabled":""}>← 이전</button>
            <button class="navbtn next" id="nextBtn">${stepIdx===STEPS.length-1?"결과 보기":"다음 →"}</button>`}
@@ -1640,7 +1901,7 @@ function drawStep(){
   if(incIn) incIn.oninput = e=>{ const n = parseInt(e.target.value); P.incomeHome = isNaN(n)?null:n; };
 
   qCard.querySelector("#prevBtn").onclick = ()=>{
-    if(editOne){ editOne = false; showResult(); return; }   // 고쳐 넣기 취소 → 결과로 복귀
+    if(editOne){ leaveEditOne(); return; }                  // 고쳐 넣기 취소 → 뒤로
     if(stepIdx>0){ stepIdx--; drawStep(); }
   };
   qCard.querySelector("#nextBtn").onclick = ()=>{
@@ -1648,17 +1909,27 @@ function drawStep(){
       alert(stepIdx===0 ? "연세를 적어 주세요." : stepIdx===1 ? "사시는 구를 골라 주세요." : "한집에 몇 분이 사시는지 골라 주세요.");
       return;
     }
-    if(editOne){ editOne = false; showResult(); return; }    // 한 칸만 고치고 바로 결과
+    if(editOne){ leaveEditOne(); return; }                   // 한 칸만 고치고 뒤로
     if(stepIdx < STEPS.length-1){ stepIdx++; drawStep(); window.scrollTo({top:0,behavior:"smooth"}); }
     else showResult();
   };
 }
 
 /* 선택 칸만 다시 입력하기 — 답한 내용을 지우지 않고 그 단계만 다시 엽니다. */
-function editStep(i){
-  editOne = true; stepIdx = i;
-  mineIntro.hidden = true; mineResult.hidden = true; mineForm.hidden = false;
+function editStep(i, backToReview){
+  editOne = true; fromReview = !!backToReview; stepIdx = i;
+  mineIntro.hidden = true; mineResult.hidden = true;
+  mineReview.hidden = true;
+  mineForm.hidden = false;
   drawStep(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* 한 칸만 고치고 나오실 때 어떻게 돌리도 드릴지 정합니다.
+   '수정하기'로 들어오심 것이므로, 다른 칸도 이어서 보시게 확인 화면으로 돌립니다. */
+function leaveEditOne(){
+  editOne = false;
+  if(fromReview){ fromReview = false; openReview(stepIdx); }
+  else showResult();
 }
 
 /* =====================================================================
@@ -1827,6 +2098,11 @@ function showResult(){
   const check = out.filter(o=>o.res.s==="check").sort((a,b)=>score(b.d,b.res)-score(a.d,a.res));
   const no    = out.filter(o=>o.res.s==="no");
 
+  // 결과는 제목만 보여 드리므로, 판정 이유는 상세 팝업에서 읽으시게 적어 둡니다.
+  RESULT_WHY = {};
+  yes.forEach(({d,res})  => RESULT_WHY[d.id] = {kind:"yes",   why:res.why, nearby:nearbyText(d)});
+  check.forEach(({d,res})=> RESULT_WHY[d.id] = {kind:"check", why:res.why, nearby:nearbyText(d)});
+
   let h = `<div class="rsum">
     <h2>${P.age}세 어르신께 찾아드린 결과입니다</h2>
     <div class="rnums">
@@ -1834,31 +2110,23 @@ function showResult(){
       <div class="rnum check"><b>${check.length}</b><span>확인이 필요해요</span></div>
       <div class="rnum no"><b>${no.length}</b><span>해당되지 않아요</span></div>
     </div>
-    <button class="redo" id="redoBtn">↺ 처음부터 다시 입력하기</button>
-    <div class="editwrap">
-      <div class="etitle">✏ 고칠 칸만 눌러 주세요 (답하신 다른 내용은 그대로 둡니다)</div>
-      <div class="editchips">
-        ${STEPS.map((s,i)=>`<button class="editchip" data-edit="${i}">${s.s} 고치기</button>`).join("")}
-      </div>
+    <div class="rsumbtns">
+      <button class="editall" id="editBtn">✏️ 수정하기</button>
+      <button class="redo" id="redoBtn">↺ 처새부터 다시 입력하기</button>
     </div>
   </div>`;
 
-  h += renderGroup("✅ 받으실 수 있어요", "조건이 맞습니다. 카드를 누르면 신청 방법이 나옵니다.", yes, "yes");
-  h += renderGroup("🔎 확인이 필요해요", "조건 하나를 알 수 없어 판단하지 못했습니다. 신청처에 물어보시면 됩니다.", check, "check");
+  h += renderGroup("✅ 받으실 수 있어요", "조건이 맞습니다. 하나를 누르시면 왜 받으실 수 있는지와 신청 방법이 나옵니다.", yes, "yes");
+  h += renderGroup("🔎 확인이 필요해요", "조건 하나를 알 수 없어 판단하지 못했습니다. 하나를 누르시면 무엇을 확인하셔야 하는지 나옵니다.", check, "check");
 
   if(!yes.length && !check.length)
     h += `<p class="rnote">지금 조건으로는 맞는 복지를 찾지 못했습니다. ‘복지 모두 보기’에서 전체를 살펴보시거나, 동 행정복지센터에 문의해 보세요.</p>`;
 
-  h += `<p class="rnote">이 결과는 입력하신 내용만으로 계산한 참고 자료입니다. 특히 기초연금은 재산까지 함께 계산하므로,
-        정확한 판정은 동 행정복지센터나 신청 기관에서 받아 보셔야 합니다.
-        ${STD.중위소득[1]===null ? "기준 중위소득 표가 아직 등록되지 않아, 소득 기준이 있는 일부 복지는 ‘확인이 필요해요’로 안내했습니다." : ""}</p>`;
 
   mineResult.innerHTML = h;
   mineForm.hidden = true; mineIntro.hidden = true; mineResult.hidden = false;
   mineResult.querySelector("#redoBtn").onclick = startForm;
-  mineResult.querySelectorAll("[data-edit]").forEach(b=>{
-    b.onclick = ()=> editStep(parseInt(b.dataset.edit));
-  });
+  mineResult.querySelector("#editBtn").onclick  = ()=> openReview(0);
   mineResult.querySelectorAll("[data-card]").forEach(el=>{
     el.onclick = ()=>{ const d = DATA.find(x=>x.id===parseInt(el.dataset.card)); if(d) openModal(d); };
   });
@@ -1875,29 +2143,121 @@ function nearbyText(d){
 }
 function renderGroup(title, note, list, kind){
   if(!list.length) return "";
-  let h = `<div class="rgroup"><h3>${title}</h3><p class="gnote">${note}</p><div class="grid" style="padding:0;margin:0;max-width:none">`;
-  list.forEach(({d,res})=>{
-    const [pc,pt] = PERIOD[d.period];
-    const nb = nearbyText(d);
-    const due = dueLine(d);
-    h += `<div class="card" data-card="${d.id}" role="button" tabindex="0"
+  /* 어르신이 스크롤을 많이 하지 않도록, 한 행에 세 개씩 아이콘과 제목만 보여 드립니다.
+     누르시면 지금까지와 같은 상세 팝업이 뜨고, 판정 이유도 그 안에서 보실 수 있습니다. */
+  let h = `<div class="rgroup"><h3>${title}</h3><p class="gnote">${note}</p><div class="idxgrid">`;
+  list.forEach(({d})=>{
+    const timed = (d.period === "신청기간" || d.period === "마감임박");
+    h += `<button class="idx ${kind}" data-card="${d.id}" type="button"
             style="--accent:var(--c-${d.field});--tint:var(--b-${d.field})">
-        <div class="row"><div class="ic">${CAT[d.field].ic}</div><div><div class="field">${d.field}</div></div></div>
-        <h3>${d.name}</h3>
-        <p class="desc">${d.easy.benefit}</p>
-        <div class="why ${kind==="check"?"c":""}">${res.why}</div>
-        ${nb?`<p class="nearby">${nb}</p>`:""}
-        ${due?`<p class="due">${due}</p>`:""}
-        <div class="badges"><span class="badge ${pc}">${pt}</span></div>
-      </div>`;
+        <span class="iic">${CAT[d.field].ic}</span>
+        <span class="itt">${d.name}</span>
+        ${timed ? `<span class="iflag">📅 기간</span>` : ""}
+      </button>`;
   });
   return h + `</div></div>`;
 }
 
+/* =====================================================================
+   입력한 내용 확인하기 (피드백: '고칠 칸만 눌러 주세요' 대신 '수정하기')
+   결과 화면의 '✏️ 수정하기'를 누르시면, 실제로 입력된 답을 한 칸씩 보여 드립니다.
+   ‹ › 로 넘겨 보시다가 고칠 것이 있으면 그 칸만 다시 입력하고 이 화면으로 돌아옵니다.
+   ===================================================================== */
+const mineReview = document.getElementById("mineReview");
+let reviewIdx = 0;
+let fromReview = false;          // 고치기로 들어왔다가 확인 화면으로 돌아갈지
+
+const SAYV = {y:"예", n:"아니오", u:"잘 모르겠어요", "true":"예", "false":"아니오"};
+const say  = v => (v === null || v === undefined || v === "")
+                   ? "아직 고르지 않으셨습니다" : (SAYV[String(v)] || String(v));
+const LIVINGSAY = {alone:"혼자 지냅니다", couple:"어르신 두 분만 지냅니다",
+                   grand:"손주와 함께 지냅니다", other:"자녀 등 다른 가족과 지냅니다"};
+const wonSay = n => (n === null || n === undefined || n === "")
+                   ? "적지 않으셨습니다" : Number(n).toLocaleString("ko-KR") + "원";
+
+// 단계마다 "무엇을 물었고, 어떻게 답하셨는지" 한 쌍씩 돌려줍니다.
+function answersOf(i){
+  const A = P.A, B = P.B;
+  if(i === 0) return [["올해 만 나이", P.age === null ? "아직 적지 않으셨습니다" : "만 " + P.age + "세"]];
+  if(i === 1) return [["사시는 구", P.gu === "밖" ? "대전이 아닙니다" : say(P.gu)],
+                      ["사시는 동", P.dong || "건너뛰셨습니다"]];
+  if(i === 2) return [["한집에 사시는 분", P.household ? P.household + "분" : say(null)],
+                      ["한 달에 들어오는 돈", wonSay(P.incomeHome)],
+                      ["지금 일을 하시나요", P.job === "yes" ? "일하고 있습니다" : P.job === "no" ? "일하지 않습니다" : say(null)]];
+  if(i === 3) return [["기초생활수급자이신가요", say(A.basic)],
+                      ["차상위계층이신가요", say(A.near)],
+                      ["기초연금을 받고 계신가요", say(A.pension)],
+                      ["나라에서 병원비 지원을 받으시나요", say(A.medical)],
+                      ["공무원·군인·사학 연금을 받으시나요", say(P.govPension)]];
+  if(i === 4) return [["누구와 함께 지내시나요", LIVINGSAY[B.living] || say(null)],
+                      ["장애인 등록을 하셨나요", say(B.disabled)],
+                      ["혼자 바깥에 나가기 어려우신가요", say(B.immobile)],
+                      ["집안일·씻는 일에 손이 필요하신가요", say(B.careNeed)]];
+  if(i === 5){
+    const r = [["장기요양등급을 받으셨나요", say(P.ltc)],
+               ["치매·중풍·파킨슨병이 있으신가요", say(P.seniorDisease)],
+               ["치매 진단을 받으셨나요", say(P.dementia)]];
+    if(P.dementia === "y") r.push(["치매 약을 드시나요", say(P.dementiaDrug)]);
+    return r;
+  }
+  if(i === 6) return [["비슷한 돌봄을 이미 받고 계신가요",
+                       P.dupService === "y" ? "받고 있습니다" : P.dupService === "n" ? "받지 않습니다" : say(null)]];
+  return [["궁금한 분야", P.interests.length ? P.interests.join(" · ") : "고르지 않으셨습니다"]];
+}
+
+function openReview(i){
+  reviewIdx = (i === undefined) ? 0 : i;
+  mineIntro.hidden = true; mineForm.hidden = true; mineResult.hidden = true;
+  mineReview.hidden = false;
+  drawReview(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function drawReview(){
+  const s = STEPS[reviewIdx];
+  const rows = answersOf(reviewIdx)
+    .map(([k,v])=>`<div class="arow"><b>${k}</b><span>${v}</span></div>`).join("");
+  mineReview.innerHTML = `<div class="review">
+    <p class="rvlead">입력하신 내용을 한 칸씩 보여 드립니다.
+      <b>‹ ›</b> 를 눌러 넘겨 보시고, <b>고칠 것이 있는 칸</b>에서 아래 ‘이 칸 고치기’를 눌러 주세요.</p>
+    <div class="rvbar">
+      <button class="rvarrow" id="rvPrev" type="button" ${reviewIdx === 0 ? "disabled" : ""} aria-label="앞 칸 보기">‹</button>
+      <div class="rvnow">
+        <span class="rvn">${reviewIdx + 1} / ${STEPS.length}</span>
+        <span class="rvs">${s.s}</span>
+      </div>
+      <button class="rvarrow" id="rvNext" type="button" ${reviewIdx === STEPS.length - 1 ? "disabled" : ""} aria-label="다음 칸 보기">›</button>
+    </div>
+    <div class="rvcard">
+      <h2 class="rvq">${s.t}</h2>
+      ${rows}
+      <button class="rvedit" id="rvEdit" type="button">✏️ 이 칸 고치기</button>
+    </div>
+    <div class="rvdots">${STEPS.map((x,i)=>
+      `<button class="rvdot ${i === reviewIdx ? "on" : ""}" type="button" data-jump="${i}">${x.s}</button>`).join("")}</div>
+    <button class="rvdone" id="rvDone" type="button">✅ 확인 다 했습니다 · 결과 보기</button>
+  </div>`;
+
+  const go = n =>{ reviewIdx = n; drawReview(); };
+  mineReview.querySelector("#rvPrev").onclick = ()=>{ if(reviewIdx > 0) go(reviewIdx - 1); };
+  mineReview.querySelector("#rvNext").onclick = ()=>{ if(reviewIdx < STEPS.length - 1) go(reviewIdx + 1); };
+  mineReview.querySelector("#rvEdit").onclick = ()=> editStep(reviewIdx, true);
+  mineReview.querySelector("#rvDone").onclick = ()=>{ mineReview.hidden = true; showResult(); };
+  mineReview.querySelectorAll("[data-jump]").forEach(b=> b.onclick = ()=> go(parseInt(b.dataset.jump)));
+}
+
+// 확인 화면에서는 키보드 좌우 화살표로도 넘길 수 있습니다.
+document.addEventListener("keydown", e=>{
+  if(!mineReview || mineReview.hidden) return;
+  if(e.key === "ArrowLeft"  && reviewIdx > 0)                { reviewIdx--; drawReview(); }
+  if(e.key === "ArrowRight" && reviewIdx < STEPS.length - 1) { reviewIdx++; drawReview(); }
+});
+
 // ── 시작/전환 ──
 function startForm(){
-  resetP(); stepIdx = 0; editOne = false;
-  mineIntro.hidden = true; mineResult.hidden = true; mineForm.hidden = false;
+  resetP(); stepIdx = 0; editOne = false; fromReview = false;
+  mineIntro.hidden = true; mineResult.hidden = true;
+  if(mineReview) mineReview.hidden = true;
+  mineForm.hidden = false;
   drawStep(); window.scrollTo({top:0,behavior:"smooth"});
 }
 document.getElementById("startBtn").onclick = startForm;
@@ -1955,5 +2315,7 @@ switchTab("mine");
 <!-- ⭐ 프로그램 스크립트 "뒤"에 저장 기능 얹기 -->
 <script src="supabaseFeatures.js"></script>
 <script src="profileFeature.js"></script>
+<!-- 가족 그룹 · 결과 공유 링크 · 문자 보내기 (반드시 맨 마지막) -->
+<script src="familyShareFeature.js"></script>
 </body>
 </html>

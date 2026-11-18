@@ -492,8 +492,10 @@
     if (!currentUser) return;
     try {
       const [favRes, stRes] = await Promise.all([
-        db.from("favorites").select("welfare_id"),
-        db.from("welfare_status").select("welfare_id,status")
+        // 가족 그룹이 생기면 RLS 가 가족의 행도 '읽기'로 열어 주므로,
+        // 내 것만 가져오도록 user_id 로 꼭 거릅니다.
+        db.from("favorites").select("welfare_id").eq("user_id", currentUser.id),
+        db.from("welfare_status").select("welfare_id,status").eq("user_id", currentUser.id)
       ]);
       if (favRes.error) console.warn("즐겨찾기 불러오기 실패:", favRes.error.message);
       if (stRes.error)  console.warn("기록 불러오기 실패:", stRes.error.message);
