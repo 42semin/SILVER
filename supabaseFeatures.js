@@ -29,6 +29,38 @@
   let guestHintShown = false;             // 비회원 안내를 너무 자주 띄우지 않으려는 표시
 
   /* -------------------------------------------------------------------
+     0-b) 비회원 저장소 (피드백: 2112 비회원 맞춤 복지 검사 / 2210 메일인증 어려움)
+
+     이메일 인증이 어려워 아예 못 쓰시는 분이 있다는 피드백을 받아,
+     로그인하지 않아도 별표와 내 기록이 남게 했습니다.
+     로그인한 분은 Supabase(어느 기기에서나), 비회원은 이 브라우저에만 저장됩니다.
+     ------------------------------------------------------------------- */
+  const G_FAV = "silver.guest.favs";
+  const G_ST  = "silver.guest.status";
+
+  function lsGet(key, fallback) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+    catch (e) { return fallback; }
+  }
+  function lsSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* 저장 공간이 막혀 있어도 앱은 그대로 동작 */ }
+  }
+
+  // 비회원이 이 기기에 남겨 둔 별표·기록을 화면에 올립니다.
+  function loadGuestData() {
+    const f = lsGet(G_FAV, []);
+    const s = lsGet(G_ST, {});
+    favs.clear();
+    (Array.isArray(f) ? f : []).forEach((id) => favs.add(Number(id)));
+    for (const k in statusMap) delete statusMap[k];
+    Object.keys(s || {}).forEach((k) => { statusMap[k] = s[k]; });
+    render();
+    if (window.refreshMyPage) window.refreshMyPage();
+  }
+  function saveGuestFavs()   { lsSet(G_FAV, [...favs]); }
+  function saveGuestStatus() { lsSet(G_ST, statusMap); }
+
+  /* -------------------------------------------------------------------
      1) 화면(로그인 바 + 로그인 창) 만들기 — HTML을 직접 고치지 않도록 JS로 삽입
      ------------------------------------------------------------------- */
   // (1-a) 스타일 삽입
@@ -327,6 +359,13 @@
       authBar.appendChild(who);
       authBar.appendChild(out);
     } else {
+      // 로그인을 해야 쓸 수 있는 것으로 오해하지 않도록 먼저 적어 둡니다.
+      const note = document.createElement("span");
+      note.className = "who";
+      note.style.cssText = "font-weight:700;color:#3f7d4e;font-size:16px;";
+      note.textContent = "로그인 없이도 다 쓰실 수 있어요";
+      authBar.appendChild(note);
+
       const login = document.createElement("button");
       login.className = "authbtn primary";
       login.textContent = "로그인";
@@ -363,20 +402,18 @@
           .then(({ error }) => { if (error) console.warn("즐겨찾기 삭제 실패:", error.message); });
       }
     } else {
-      hintLogin();                        // 비회원에게 저장 안내(1회)
+      saveGuestFavs();                    // 비회원 — 이 기기에 저장
+      hintLogin();
     }
   };
 
+  // 비회원도 저장은 됩니다. 창을 막지 않고 한 번만 알려 드립니다.
   function hintLogin() {
     if (guestHintShown) return;
     guestHintShown = true;
-    // 부드럽게 한 번만 안내
-    setTimeout(() => {
-      if (!currentUser) {
-        const go = confirm("로그인하시면 즐겨찾기와 기록이 저장돼 다음에 또 볼 수 있어요.\n지금 로그인하시겠어요?");
-        if (go) openAuth("login");
-      }
-    }, 200);
+    const msg = "이 기기에 저장해 두었습니다. 다시 오셔도 그대로 있습니다. " +
+                "휴대전화와 컴퓨터에서 함께 보시려면 로그인해 주세요.";
+    if (window.showToast) window.showToast(msg, "로그인", () => openAuth("login"));
   }
 
   /* -------------------------------------------------------------------
@@ -442,6 +479,7 @@
           .then(({ error }) => { if (error) console.warn("기록 저장 실패:", error.message); });
       }
     } else {
+      saveGuestStatus();                  // 비회원 — 이 기기에 저장
       hintLogin();
     }
   }
@@ -473,11 +511,11 @@
     }
   }
 
+  // 로그아웃했거나 처음부터 비회원이면, 이 기기에 남겨 둔 것으로 되돌립니다.
   function clearUserData() {
     favs.clear();
     for (const k in statusMap) delete statusMap[k];
-    render();
-    if (window.refreshMyPage) window.refreshMyPage();
+    loadGuestData();
   }
 
   /* -------------------------------------------------------------------
@@ -536,11 +574,15 @@
         "② config.js 의 프로젝트 주소가 맞는지 ③ 인터넷 연결 상태"
       );
       showDbBanner(
-        "⚠ 지금 데이터베이스에 연결되지 않아 로그인·즐겨찾기 저장이 되지 않습니다. " +
-        "복지 정보 검색은 그대로 쓰실 수 있어요."
+        "⚠ 지금은 로그인 서버에 연결되지 않습니다. 맞춤 복지 찾기와 별표·내 기록은 " +
+        "이 기기에 저장되어 그대로 쓰실 수 있습니다."
       );
     }
   }
+  // 비회원이 이 기기에 남겨 둔 별표·기록을 먼저 올려 둡니다.
+  // (로그인되어 있으면 바로 뒤에서 내 계정 자료로 덮어씁니다)
+  loadGuestData();
+
   checkDbConnection();
 
   // 인증 메일 링크를 누르고 돌아온 경우의 결과 처리

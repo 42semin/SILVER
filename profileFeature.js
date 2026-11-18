@@ -27,7 +27,20 @@
      0) 상태값 — 이 파일이 따로 관리합니다
      ------------------------------------------------------------------- */
   let profUser = null;       // 지금 로그인한 사용자 (없으면 null = 비회원)
-  let savedProfile = null;   // DB에서 불러온 '내 입력 정보' (없으면 null)
+  let savedProfile = null;   // 불러온 '내 입력 정보' (없으면 null)
+
+  /* 비회원 저장소 (피드백: 2112 비회원 맞춤 복지 검사 / 2210 메일인증 어려움)
+     로그인한 분은 Supabase 에, 비회원은 이 브라우저에 저장합니다.
+     어느 쪽이든 '저장해 둔 내 정보로 결과 보기' 는 똑같이 동작합니다. */
+  const G_PROF = "silver.guest.profile";
+  function guestLoad() {
+    try { const v = localStorage.getItem(G_PROF); return v ? JSON.parse(v) : null; }
+    catch (e) { return null; }
+  }
+  function guestSave(data) {
+    try { localStorage.setItem(G_PROF, JSON.stringify(data)); return true; }
+    catch (e) { return false; }
+  }
 
   /* -------------------------------------------------------------------
      1) 큰 글씨 버튼 스타일 (어르신용) — JS로 삽입해 HTML은 안 건드림
@@ -74,15 +87,38 @@
   if (startBtn) startBtn.insertAdjacentElement("afterend", loadBtn);
 
   function refreshLoadBtn() {
-    loadBtn.style.display = (profUser && savedProfile) ? "block" : "none";
+    loadBtn.style.display = savedProfile ? "block" : "none";   // 비회원도 보입니다
   }
 
   /* -------------------------------------------------------------------
      3) 저장 — 지금 입력한 P 를 DB에 통째로 올립니다 (upsert = 있으면 덮어씀)
      ------------------------------------------------------------------- */
+  // 저장이 끝났을 때 버튼을 잠깐 초록색으로 바꿔 보여 줍니다.
+  function flashSaved(btn) {
+    savedProfile = JSON.parse(JSON.stringify(P));
+    refreshLoadBtn();
+    if (!btn) return;
+    const old = btn.textContent;
+    btn.textContent = "✅ 저장했어요";
+    btn.classList.add("done");
+    setTimeout(() => { btn.textContent = old; btn.classList.remove("done"); }, 1800);
+  }
+
   async function saveProfile(btn) {
+    // 비회원 — 로그인 없이 이 기기에 저장합니다.
     if (!profUser) {
-      alert("로그인하시면 입력하신 정보가 저장돼, 다음에 또 쓰실 수 있어요.\n오른쪽 위 '로그인' 단추를 눌러 주세요.");
+      if (guestSave(P)) {
+        flashSaved(btn);
+        if (window.showToast) {
+          window.showToast(
+            "답하신 내용을 이 기기에 저장했습니다. 다음에 오시면 설문 없이 바로 결과를 보실 수 있습니다.",
+            "로그인하고 어디서나 보기",
+            () => { const b = document.querySelector(".authbtn.primary"); if (b) b.click(); }
+          );
+        }
+      } else {
+        alert("이 브라우저에 저장할 수 없었습니다. 비밀(시크릿) 창을 쓰고 계시면 일반 창에서 다시 해 보세요.");
+      }
       return;
     }
     if (btn) btn.disabled = true;
@@ -99,14 +135,7 @@
         return;
       }
       // 방금 저장한 값을 기억해 둠(깊은 복사). 그래야 불러오기 버튼이 바로 켜집니다.
-      savedProfile = JSON.parse(JSON.stringify(P));
-      refreshLoadBtn();
-      if (btn) {
-        const old = btn.textContent;
-        btn.textContent = "✅ 저장했어요";
-        btn.classList.add("done");
-        setTimeout(() => { btn.textContent = old; btn.classList.remove("done"); }, 1800);
-      }
+      flashSaved(btn);
     } catch (e) {
       console.warn("내 정보 저장 오류:", e.message);
       alert("저장 중 문제가 생겼어요: " + e.message);
@@ -123,7 +152,24 @@
   function restoreProfile() {
     if (!savedProfile) return;
     if (typeof resetP === "function") resetP();        // 기본값으로 초기화
-    Object.assign(P, JSON.parse(JSON.stringify(savedProfile)));  // 저장본 덮어쓰기
+    const saved = JSON.parse(JSON.stringify(savedProfile));
+
+    // A·B 는 객체이므로 통째로 바꾸지 않고 항목만 덮어씁니다.
+    // (그래야 나중에 추가된 항목이 기본값으로 남아 오류가 나지 않습니다)
+    Object.keys(saved).forEach((k) => {
+      if (saved[k] && typeof saved[k] === "object" && !Array.isArray(saved[k]) && P[k]) {
+        Object.assign(P[k], saved[k]);
+      } else {
+        P[k] = saved[k];
+      }
+    });
+
+    // 예전에 저장한 정보에는 B.living 이 없습니다. 있던 값으로 되살립니다.
+    if (P.B.living === undefined || P.B.living === null) {
+      P.B.living = P.B.alone ? "alone" : P.B.couple ? "couple" : P.B.grand ? "grand" : null;
+    }
+    if (typeof syncLiving === "function") syncLiving();
+
     if (typeof showResult === "function") showResult(); // 판정 → 결과 화면
   }
 
@@ -133,7 +179,8 @@
         - maybeSingle(): 행이 없으면 오류 대신 data=null 을 줍니다.
      ------------------------------------------------------------------- */
   async function fetchProfile() {
-    if (!profUser) { savedProfile = null; refreshLoadBtn(); return; }
+    // 비회원이면 이 기기에 저장해 둔 것을 읽습니다.
+    if (!profUser) { savedProfile = guestLoad(); refreshLoadBtn(); return; }
     try {
       const { data, error } = await db
         .from("profile_info")
@@ -166,7 +213,7 @@
     const b = document.createElement("button");
     b.className = "saveprof";
     b.type = "button";
-    b.textContent = profUser ? "💾 이 정보 저장하기" : "💾 로그인하고 내 정보 저장하기";
+    b.textContent = profUser ? "💾 이 정보 저장하기" : "💾 이 정보 저장하기 (이 기기에)";
     b.onclick = () => saveProfile(b);
     const redo = rsum.querySelector(".redo");   // '다시 입력하기' 버튼 옆에
     if (redo) redo.insertAdjacentElement("afterend", b);
@@ -177,6 +224,10 @@
      7) 로그인 상태 추적 — 로그인/로그아웃 때마다 자동 실행
         (페이지가 처음 열릴 때도 INITIAL_SESSION 이벤트로 한 번 불립니다)
      ------------------------------------------------------------------- */
+  // 먼저 비회원 저장본을 읽어 둡니다.
+  // (인터넷이나 Supabase 가 막혀 아래 코드가 돌지 못해도 비회원 기능은 살아 있도록)
+  fetchProfile();
+
   db.auth.onAuthStateChange((event, session) => {
     profUser = session ? session.user : null;
     fetchProfile();
