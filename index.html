@@ -459,6 +459,50 @@ footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-
 .fsbtn.s2{font-size:21px}
 .fsbtn.s3{font-size:26px}
 
+/* ---------- 음성 안내 (피드백: 2107 질문 읽어주는 음성 안내) ----------
+   질문 옆에 작은 스피커(🔊)를 두어, 누르시면 질문과 답 버튼을
+   차례로 한 칸씩 읽어 드립니다. 지금 읽는 칸에는 불을 한 번 켜 드립니다. */
+.qsub{font-weight:400;font-size:17px;color:#7a7264;display:block;margin-top:5px}
+.spk{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  vertical-align:middle;margin-left:8px;flex:none;
+  min-width:38px;height:38px;padding:0 10px;
+  border:2px solid #BEE6CE;border-radius:12px;background:#F2FBF6;color:#0e7d71;
+  font-family:var(--ui);font-size:18px;font-weight:800;line-height:1;cursor:pointer;
+}
+.spk:hover{border-color:#17B0A0;background:#E4F7EC}
+.spk:focus-visible{outline:3px solid #17B0A0;outline-offset:2px}
+.spk.on{background:#17B0A0;border-color:#17B0A0;color:#fff}
+.spk .spktx{font-size:15px;font-weight:800}
+.spkall{margin-left:10px}
+.no-tts .spk{display:none}
+
+/* 읽어 드리는 칸에 불을 한 번 켰다 끕니다 */
+@keyframes vpulse{
+  0%{box-shadow:0 0 0 0 rgba(23,176,160,.5)}
+  45%{box-shadow:0 0 0 10px rgba(23,176,160,.16)}
+  100%{box-shadow:0 0 0 0 rgba(23,176,160,0)}
+}
+.opt.vread,.numin.vread{
+  background:#DDF6F2;border-color:#17B0A0;color:#0b5f56;
+  animation:vpulse .8s ease-out 1;
+}
+.opt.vread[aria-pressed="true"]{background:#0e7d71;border-color:#0e7d71;color:#fff}
+
+/* 음성 안내 생김줄 — 시작 화면 */
+.introvoice{
+  font-family:var(--read);font-size:18px;line-height:1.6;color:#0e5f56;
+  background:#F2FBF6;border:2px solid #BEE6CE;border-radius:14px;
+  padding:13px 18px;margin:14px auto 0;max-width:46ch;text-align:left;
+}
+.no-tts .introvoice{display:none}
+
+/* ---------- 배경음악 단추 (피드백: 2107 임영웅 노래) ---------- */
+.fsdiv{width:2px;height:28px;background:var(--line);border-radius:2px;margin:0 8px}
+.fsbtn.bgm{font-size:22px;min-width:50px}
+@keyframes notepulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.fsbtn.bgm[aria-pressed="true"]{animation:notepulse 2s ease-in-out infinite}
+
 /* ---------- 비회원 안내 (피드백: 비회원 맞춤 복지 검사 / 메일인증 어려움) ---------- */
 .guestnote{
   font-family:var(--read);font-size:18px;line-height:1.6;color:#0E6B3C;
@@ -654,6 +698,10 @@ footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-
   <button class="fsbtn s1" data-fs="1"    aria-pressed="true"  aria-label="글자 크기 보통">가</button>
   <button class="fsbtn s2" data-fs="1.15" aria-pressed="false" aria-label="글자 크기 크게">가</button>
   <button class="fsbtn s3" data-fs="1.3"  aria-pressed="false" aria-label="글자 크기 아주 크게">가</button>
+  <span class="fsdiv" aria-hidden="true"></span>
+  <span class="fslabel">배경음악</span>
+  <button class="fsbtn bgm" id="bgmBtn" type="button" aria-pressed="false"
+          aria-label="배경음악 틀기" title="조용한 연주곡을 아주 작게 틀어 드립니다">♪</button>
 </div>
 
 <header class="top">
@@ -681,6 +729,8 @@ footer{max-width:1120px;margin:0 auto;padding:10px 26px 50px;color:#9a917d;font-
       <p>모르시는 것은 <b>“잘 모르겠어요”</b>를 누르시면 됩니다. 그래도 결과는 나옵니다.</p>
       <p class="guestnote">✅ <b>회원가입을 하지 않으셔도</b> 끝까지 다 쓰실 수 있습니다.
         이름도, 이메일도 묻지 않습니다. 답하신 내용은 <b>이 기기에만</b> 저장됩니다.</p>
+      <p class="introvoice">🔊 읽기가 힘드시면 <b>질문 옆의 스피커</b>를 눌러 주세요.
+        질문과 답 버튼을 <b>한 칸씩 소리로 읽어</b> 드립니다.</p>
       <button class="startbtn" id="startBtn">시작하겠습니다</button>
       <button class="skip" id="skipBtn">그냥 전체 복지를 둘러볼게요</button>
     </div>
@@ -1756,9 +1806,20 @@ function optRow(name, list, cur, onPick, unknownKey){
     `<button class="opt ${v===unknownKey?'unknown':''}" data-n="${name}" data-v="${v}" aria-pressed="${String(cur)===String(v)}">${label}</button>`
   ).join("") + `</div>`;
 }
-function group(label, inner){ return `<div class="qgroup"><span class="qlabel">${label}</span>${inner}</div>`; }
+/* 질문 한 칸.
+   질문 글 바로 옆에 작은 스피커(🔊)를 붙여, 누르시면 이 질문과 답 버튼을
+   차례로 한 칸씩 읽어 드립니다(읽는 일은 맨 아래 Voice 가 합니다).
+   쉬운 말 설명(.qsub)은 스피커 뒤로 보내, 스피커가 질문 바로 옆에 붙게 합니다. */
+function group(label, inner){
+  const i = label.indexOf('<span class="qsub"');
+  const head = (i < 0) ? label : label.slice(0, i);
+  const tail = (i < 0) ? ""    : label.slice(i);
+  return `<div class="qgroup"><span class="qlabel">${head}` +
+    `<button class="spk" type="button" aria-label="이 질문을 읽어 드립니다"` +
+    ` title="이 질문과 답을 소리로 읽어 드립니다">🔊</button>${tail}</span>${inner}</div>`;
+}
 // 질문 아래에 붙는 작은 쉬운 말 설명
-function sub(t){ return ` <span style="font-weight:400;font-size:17px;color:#7a7264;display:block;margin-top:5px">${t}</span>`; }
+function sub(t){ return ` <span class="qsub">${t}</span>`; }
 
 function s_age(){
   return group("올해 만 나이를 적어 주세요" + sub("주민등록증에 적힌 생년으로 세신 나이입니다."),
@@ -1864,12 +1925,16 @@ function paintAgeHint(){
 
 function drawStep(){
   const s = STEPS[stepIdx];
+  if(window.Voice) Voice.stop();          // 칸을 넘기면 읽던 것을 그칩니다
   document.getElementById("pbarFill").style.width = ((stepIdx)/STEPS.length*100)+"%";
   document.getElementById("pStep").textContent = editOne
     ? `${s.s} 칸만 고쳐 넣는 중입니다 (${stepIdx+1} / ${STEPS.length} 단계)`
     : `${stepIdx+1} / ${STEPS.length} 단계`;
   qCard.innerHTML = `${editOne?`<p class="editbanner">✏️ <b>${s.s}</b>만 다시 골라 주세요. 다른 칸은 그대로 두었습니다.</p>`:""}
-    <h2 class="qtitle">${s.t}</h2><p class="qhelp">${s.h}</p>${s.build()}
+    <h2 class="qtitle">${s.t}<button class="spk spkall" id="spkAll" type="button"
+        aria-label="이 화면을 모두 읽어 드립니다"
+        title="제목과 질문, 답 버튼을 차례로 모두 읽어 드립니다">🔊<span class="spktx">모두 읽기</span></button></h2>
+    <p class="qhelp">${s.h}</p>${s.build()}
     <div class="navrow">
       ${editOne
         ? `<button class="navbtn back" id="nextBtn">✅ 다 고쳤습니다 · ${fromReview ? "확인 화면으로" : "결과 보기"}</button>
@@ -1878,6 +1943,15 @@ function drawStep(){
            <button class="navbtn next" id="nextBtn">${stepIdx===STEPS.length-1?"결과 보기":"다음 →"}</button>`}
     </div>`;
   paintAgeHint();
+
+  /* 음성 안내 — 질문 옆 스피커를 눌렀을 때 (피드백: 2107) */
+  if(window.Voice){
+    const all = qCard.querySelector("#spkAll");
+    if(all) all.onclick = ()=> Voice.readCard(qCard, all);
+    qCard.querySelectorAll(".qlabel > .spk").forEach(b=>{
+      b.onclick = ()=> Voice.readGroup(b.closest(".qgroup"), b);
+    });
+  }
 
   qCard.querySelectorAll(".opt[data-n]").forEach(b=>{
     b.onclick = ()=>{
@@ -2112,7 +2186,7 @@ function showResult(){
     </div>
     <div class="rsumbtns">
       <button class="editall" id="editBtn">✏️ 수정하기</button>
-      <button class="redo" id="redoBtn">↺ 처새부터 다시 입력하기</button>
+      <button class="redo" id="redoBtn">↺ 처음부터 다시 입력하기</button>
     </div>
   </div>`;
 
@@ -2307,6 +2381,331 @@ window.showToast = function(msg, actionLabel, onAction){
   document.body.appendChild(t);
   setTimeout(()=>{ if(t.isConnected) t.remove(); }, 9000);
 };
+
+/* =====================================================================
+   질문 읽어주는 음성 안내 (피드백: 2107 "질문을 읽어주는 음성 안내")
+
+   브라우저에 들어 있는 Web Speech API(speechSynthesis)로 읽어 드립니다.
+   따로 깔 것도, 인터넷으로 보낼 것도 없어 어르신 기기에서 바로 됩니다.
+     · 질문 옆 작은 🔊      : 그 질문 → 쉬운 말 설명 → 답 버튼을 차례로 한 칸씩
+     · 제목 옆 '모두 읽기'  : 제목 → 안내 → 그 화면의 모든 질문과 답
+   답 버튼은 읽는 동안 불을 한 번 켰다 꺼(.vread) 지금 어디를 읽는지 보여 드립니다.
+   읽고 있는 스피커를 한 번 더 누르시면 그칩니다.
+   ===================================================================== */
+window.Voice = (function(){
+  const OK = ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
+  if(!OK) document.documentElement.classList.add("no-tts");   // 못 읽는 브라우저면 스피커를 감춥니다
+
+  let voice = null;      // 쓸 한국어 목소리
+  let token = 0;         // 읽기 차례표 — 번호가 바뀌면 앞서 읽던 것은 버립니다
+  let curBtn = null;     // 지금 불이 켜져 있는 스피커 단추
+
+  function pickVoice(){
+    let vs = [];
+    try{ vs = speechSynthesis.getVoices() || []; }catch(e){}
+    const ko = vs.filter(v => /^ko/i.test(v.lang || ""));
+    voice = ko.find(v => /heami|sun-?hi|yuna|female|여성|유나|해미/i.test(v.name || "")) || ko[0] || null;
+  }
+  if(OK){ pickVoice(); try{ speechSynthesis.onvoiceschanged = pickVoice; }catch(e){} }
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // 화면에 적힌 글을 소리내어 읽기 좋게 다듬습니다(그림글자 떼기, 가운뎃점 쉼표로 등).
+  function clean(t){
+    return String(t || "")
+      .replace(/[\u{1F000}-\u{1FAFF}☀-➿️]/gu, " ")
+      .replace(/[·ㆍ]/g, ", ")
+      .replace(/(\d)\s*~\s*(\d)/g, "$1에서 $2")
+      .replace(/(\d+)\s*%/g, "$1 퍼센트")
+      .replace(/[‘’“”"]/g, "")
+      .replace(/\s+/g, " ")
+      .replace(/^[\s,]+|[\s,]+$/g, "");
+  }
+  function textOf(el){
+    if(!el) return "";
+    const c = el.cloneNode(true);
+    c.querySelectorAll(".spk").forEach(x => x.remove());   // 스피커 글자는 읽지 않습니다
+    return clean(c.textContent);
+  }
+
+  // 한 토막을 읽고, 다 읽으면 약속(Promise)을 풀어 줍니다.
+  function sayOne(text, my){
+    return new Promise(res => {
+      if(!OK || !text){ res(); return; }
+      let done = false;
+      const fin = ()=>{ if(!done){ done = true; res(); } };
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "ko-KR";
+      if(voice) u.voice = voice;
+      u.rate = 0.88;      // 어르신께 맞추어 조금 느리게
+      u.pitch = 1.0;
+      u.volume = 1.0;
+      u.onend = fin;
+      u.onerror = fin;
+      // 끝났다는 신호를 주지 않는 브라우저가 있어, 글자 수로 넉넉히 시간을 재 둡니다.
+      setTimeout(fin, 1800 + text.length * 320);
+      try{ speechSynthesis.speak(u); }catch(e){ fin(); }
+    });
+  }
+
+  function lightOn(el){
+    if(!el || !el.isConnected) return;
+    el.classList.remove("vread");
+    void el.offsetWidth;                 // 같은 칸을 다시 읽어도 불이 깜빡이게 합니다
+    el.classList.add("vread");
+  }
+  function lightsOff(){
+    document.querySelectorAll(".vread").forEach(x => x.classList.remove("vread"));
+  }
+
+  async function run(items, my){
+    for(const it of items){
+      if(my !== token) return;
+      lightOn(it.el);
+      await sayOne(it.t, my);
+      if(it.el) it.el.classList.remove("vread");
+      if(my !== token) return;
+      await sleep(it.el ? 110 : 190);     // 한 칸씩 끊어 들리도록 조금 쉽니다
+    }
+    if(my === token) finish();
+  }
+  function finish(){
+    lightsOff();
+    if(curBtn){ curBtn.classList.remove("on"); curBtn = null; }
+    if(window.BGM) BGM.duck(false);
+  }
+
+  function stop(){
+    token++;
+    try{ speechSynthesis.cancel(); }catch(e){}
+    finish();
+  }
+
+  async function start(btn, items){
+    if(!OK){
+      if(window.showToast) showToast("이 브라우저는 음성 안내를 지원하지 않습니다. 크롬이나 엣지로 열어 보세요.");
+      return;
+    }
+    const again = !!(btn && btn.classList.contains("on"));
+    stop();
+    if(again) return;                    // 읽던 스피커를 다시 누르시면 그칩니다
+    items = (items || []).filter(x => x && x.t);
+    if(!items.length) return;
+    const my = ++token;
+    if(btn){ btn.classList.add("on"); curBtn = btn; }
+    if(window.BGM) BGM.duck(true);       // 배경음악은 말소리 동안 작게
+    await sleep(140);                    // cancel 바로 뒤에 speak 하면 안 읽는 브라우저가 있습니다
+    if(my !== token) return;
+    run(items, my);
+  }
+
+  // 질문 한 칸: 질문 → 쉬운 말 설명 → 답 버튼 하나씩
+  function groupItems(grp){
+    const items = [];
+    const lab = grp.querySelector(".qlabel");
+    if(lab){
+      const c = lab.cloneNode(true);
+      c.querySelectorAll(".spk").forEach(x => x.remove());
+      const subs = [...c.querySelectorAll(".qsub")];
+      const extra = subs.map(x => clean(x.textContent)).filter(Boolean);
+      subs.forEach(x => x.remove());
+      items.push({ t: clean(c.textContent) });
+      extra.forEach(t => items.push({ t: t }));
+    }
+    const opts = [...grp.querySelectorAll(".opt")];
+    opts.forEach(o => items.push({ t: textOf(o), el: o }));
+    if(!opts.length){
+      const num = grp.querySelector(".numin");
+      if(num) items.push({ t: "아래 칸에 숫자를 적어 주세요.", el: num });
+    }
+    return items;
+  }
+
+  function readGroup(grp, btn){ if(grp) start(btn, groupItems(grp)); }
+
+  function readCard(card, btn){
+    if(!card) return;
+    const items = [];
+    const ttl = card.querySelector(".qtitle"), help = card.querySelector(".qhelp");
+    if(ttl)  items.push({ t: textOf(ttl) });
+    if(help) items.push({ t: textOf(help) });
+    card.querySelectorAll(".qgroup").forEach(g => items.push(...groupItems(g)));
+    start(btn, items);
+  }
+
+  // 다른 창으로 가시면 읽기를 그칩니다.
+  document.addEventListener("visibilitychange", ()=>{ if(document.hidden) stop(); });
+  window.addEventListener("beforeunload", stop);
+
+  return { readGroup, readCard, stop, ok: OK };
+})();
+
+/* =====================================================================
+   배경음악 켜고 끄기 (피드백: 2107 "임영웅 노래")
+
+   가요 음원은 저작권이 있어 사이트에 넣을 수 없습니다. 그래서 피드백의 본뜻
+   ─ "어르신이 머물고 싶은 화면" ─ 을 살려, 저작권이 없는 느린 5음계(펜타토닉)
+   연주를 Web Audio API 로 그 자리에서 만들어 아주 작게 들려드립니다.
+   받을 음원 파일이 없고, 음성 안내가 나오면 저절로 소리를 줄입니다.
+   ===================================================================== */
+window.BGM = (function(){
+  const KEY = "silver.bgm", NOTEKEY = "silver.bgm.note";
+  const AC  = window.AudioContext || window.webkitAudioContext;
+  const btn = document.getElementById("bgmBtn");
+  const OK  = !!AC;
+
+  let ctx = null, master = null, echo = null, timer = null;
+  let on = false, ducked = false;
+  let melT = 0, chT = 0, mi = 0, ci = 0;
+
+  const VOL  = 0.085;        // 말소리를 가리지 않도록 아주 작게
+  const BEAT = 60 / 64;      // 1분에 64박 — 걸음처럼 느리게
+
+  // 가락: 라단조 5음계(라·도·레·미·솔). 자장가처럼 오르내립니다. [음높이, 박]
+  const MEL = [
+    [69,2],[72,1],[74,1],[76,2],[74,2],
+    [72,1],[69,1],[67,2],[69,4],
+    [74,2],[76,1],[79,1],[81,2],[79,2],
+    [76,1],[74,1],[72,2],[74,4],
+    [81,2],[79,1],[76,1],[74,2],[72,2],
+    [69,1],[67,1],[69,2],[72,4],
+    [76,2],[74,1],[72,1],[69,2],[67,2],
+    [72,2],[69,2],[69,8]
+  ];
+  // 받침 화음: 라단조 → 바장조 → 다장조 → 사장조 (네 박씩)
+  const CHORD = [[57,60,64],[53,57,60],[48,52,55],[55,59,62]];
+  const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+
+  function build(){
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = 0;
+    const lp = ctx.createBiquadFilter();        // 높은 소리를 깎아 부드럽게
+    lp.type = "lowpass"; lp.frequency.value = 2400;
+    master.connect(lp); lp.connect(ctx.destination);
+
+    echo = ctx.createDelay(1.0);                 // 은은한 메아리
+    echo.delayTime.value = 0.34;
+    const fb = ctx.createGain(); fb.gain.value = 0.25;
+    const wet = ctx.createGain(); wet.gain.value = 0.30;
+    echo.connect(fb); fb.connect(echo); echo.connect(wet); wet.connect(master);
+  }
+
+  // 가야금을 뜯듯 짧게 울리는 소리 한 알
+  function pluck(f, t, dur){
+    const o  = ctx.createOscillator(), g  = ctx.createGain();
+    const o2 = ctx.createOscillator(), g2 = ctx.createGain();
+    o.type  = "sine";     o.frequency.value  = f;
+    o2.type = "triangle"; o2.frequency.value = f * 2.002;
+    g2.gain.value = 0.16;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.22, t + 0.07);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); o2.connect(g2); g2.connect(g);
+    g.connect(master); g.connect(echo);
+    o.start(t); o2.start(t); o.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+  }
+  // 뒤에 깔리는 긴 화음
+  function pad(notes, t, dur){
+    notes.forEach(m => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = hz(m);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.05, t + Math.min(1.0, dur * 0.4));
+      g.gain.linearRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t + dur + 0.1);
+    });
+  }
+
+  // 조금 앞질러 가며 소리를 예약해 둡니다(끊기지 않게).
+  function tick(){
+    if(!on || !ctx) return;
+    const ahead = ctx.currentTime + 0.8;
+    let guard = 0;
+    while(melT < ahead && guard++ < 64){
+      const step = MEL[mi % MEL.length];
+      pluck(hz(step[0]), melT, Math.min(step[1] * BEAT * 1.7, 2.8));
+      melT += step[1] * BEAT; mi++;
+    }
+    guard = 0;
+    while(chT < ahead && guard++ < 16){
+      pad(CHORD[ci % CHORD.length], chT, BEAT * 4);
+      chT += BEAT * 4; ci++;
+    }
+  }
+
+  const level = () => ducked ? VOL * 0.22 : VOL;
+  function fade(to, sec){
+    if(!ctx) return;
+    const t = ctx.currentTime, g = master.gain;
+    try{ g.cancelScheduledValues(t); }catch(e){}
+    g.setValueAtTime(Math.max(g.value, 0.0001), t);
+    g.linearRampToValueAtTime(to, t + sec);
+  }
+  function mark(v){
+    if(!btn) return;
+    btn.setAttribute("aria-pressed", String(v));
+    btn.setAttribute("aria-label", v ? "배경음악 끄기" : "배경음악 틀기");
+    btn.title = v ? "배경음악을 끕니다" : "조용한 연주곡을 아주 작게 틀어 드립니다";
+  }
+  function save(v){ try{ localStorage.setItem(KEY, v ? "on" : "off"); }catch(e){} }
+
+  async function play(byHand){
+    if(!OK){
+      if(byHand && window.showToast) showToast("이 브라우저는 배경음악을 지원하지 않습니다.");
+      return;
+    }
+    if(!ctx) build();
+    if(ctx.state === "suspended"){ try{ await ctx.resume(); }catch(e){} }
+    on = true;
+    melT = chT = ctx.currentTime + 0.3; mi = ci = 0;
+    tick();
+    clearInterval(timer); timer = setInterval(tick, 260);
+    fade(level(), 1.4);
+    mark(true); save(true);
+    if(byHand && window.showToast){
+      let shown = "1";
+      try{ shown = localStorage.getItem(NOTEKEY); }catch(e){}
+      if(!shown){
+        showToast("저작권이 있는 가요(임영웅 노래 등)는 넣을 수 없어, 직접 만든 느린 연주곡을 아주 작게 틀어 드립니다.");
+        try{ localStorage.setItem(NOTEKEY, "1"); }catch(e){}
+      }
+    }
+  }
+  function pause(){
+    on = false;
+    clearInterval(timer); timer = null;
+    fade(0, 0.9);
+    mark(false); save(false);
+  }
+
+  if(btn){
+    if(!OK) btn.hidden = true;
+    btn.onclick = ()=> on ? pause() : play(true);
+  }
+
+  /* 지난번에 켜 두셨어도, 브라우저가 소리를 막아 두어 바로는 못 틉니다.
+     그래서 화면을 처음 누르시는 순간 이어서 틀어 드립니다. */
+  let want = false;
+  try{ want = localStorage.getItem(KEY) === "on"; }catch(e){}
+  if(want && OK){
+    const once = ()=>{
+      document.removeEventListener("pointerdown", once);
+      document.removeEventListener("keydown", once);
+      if(!on) play(false);
+    };
+    document.addEventListener("pointerdown", once);
+    document.addEventListener("keydown", once);
+  }
+
+  // 음성 안내가 나오는 동안에는 소리를 줄입니다.
+  function duck(d){
+    ducked = !!d;
+    if(on) fade(level(), 0.35);
+  }
+  return { duck, play: ()=>play(true), pause, get on(){ return on; } };
+})();
 
 render();
 switchTab("mine");
